@@ -138,62 +138,62 @@ class ReportCardShortcode {
             return $dom->saveHTML();
 
             // Get data using the singleton instance
-            $report_card = $this->api->fetchReportCard($user_id, 'date', $atts['type'], $atts['class_id']);
+            // $report_card = $this->api->fetchReportCard($user_id, 'date', $atts['type'], $atts['class_id']);
 
-            $student_name = $report_card->name;
+            // $student_name = $report_card->name;
 
-            $student_name_container = $this->createElement($dom, 'div', 'student-name-container');
-            $student_name_container->appendChild($this->createElement($dom, 'div', 'student-name', null, $student_name));
-            $root->appendChild($student_name_container);
+            // $student_name_container = $this->createElement($dom, 'div', 'student-name-container');
+            // $student_name_container->appendChild($this->createElement($dom, 'div', 'student-name', null, $student_name));
+            // $root->appendChild($student_name_container);
 
-            if ($atts['type'] == 'all') {
-                $average_container = $this->createElement($dom, 'div', 'average-container');
-                $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Overall Grade: " . $report_card->avg->final));
-                $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Letter Grade: " . $this->getLetterGrade((float)$report_card->avg->final)));
-                $root->appendChild($average_container);
-            } else {
-                $average_container = $this->createElement($dom, 'div', 'average-container');
-                $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Average: " . $report_card->avg->{$atts['type']}));
-                $root->appendChild($average_container);
-            }
+            // if ($atts['type'] == 'all') {
+            //     $average_container = $this->createElement($dom, 'div', 'average-container');
+            //     $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Overall Grade: " . $report_card->avg->final));
+            //     $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Letter Grade: " . $this->getLetterGrade((float)$report_card->avg->final)));
+            //     $root->appendChild($average_container);
+            // } else {
+            //     $average_container = $this->createElement($dom, 'div', 'average-container');
+            //     $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Average: " . $report_card->avg->{$atts['type']}));
+            //     $root->appendChild($average_container);
+            // }
 
-            $grade_table = $this->createElement($dom, 'table', 'grade-table');
-            $root->appendChild($grade_table);
+            // $grade_table = $this->createElement($dom, 'table', 'grade-table');
+            // $root->appendChild($grade_table);
             
-            $grade_table_header = $this->createElement($dom, 'thead', 'grade-table-header');
-            $grade_table_header->appendChild($this->createElement($dom, 'tr', 'grade-table-header-row'));
-            $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Date'));
-            $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Assignment'));
-            if ($atts['type'] == 'all') {
-                $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Type'));
-                $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Percentage'));
-                $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Letter Grade'));
-            } else {
-                $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Possible Points'));
-                $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Points Earned'));
-                $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Percentage'));
-            }
-            $grade_table->appendChild($grade_table_header);
+            // $grade_table_header = $this->createElement($dom, 'thead', 'grade-table-header');
+            // $grade_table_header->appendChild($this->createElement($dom, 'tr', 'grade-table-header-row'));
+            // $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Date'));
+            // $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Assignment'));
+            // if ($atts['type'] == 'all') {
+            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Type'));
+            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Percentage'));
+            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Letter Grade'));
+            // } else {
+            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Possible Points'));
+            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Points Earned'));
+            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Percentage'));
+            // }
+            // $grade_table->appendChild($grade_table_header);
 
-            foreach ($report_card->grades as $grade) {
-                $grade_row = $this->createElement($dom, 'tr', 'grade-row');
-                $grade_row->appendChild($this->createElement($dom, 'td', 'grade-date', null, $grade->date));
-                $grade_row->appendChild($this->createElement($dom, 'td', 'grade-name', null, $grade->name));
-                $grade_percentage = round((float)$grade->score / (float)$grade->total * 100);
-                if ($atts['type'] == 'all') {
-                    $type_td = $this->createElement($dom, 'td', 'grade-type');
-                    $type_td->appendChild($this->createElement($dom, 'a', 'grade-type-text', null, $grade->type, ['href' => $grade->type]));
-                    $grade_row->appendChild($type_td);
-                    $grade_letter = $this->getLetterGrade($grade_percentage);
-                    $grade_row->appendChild($this->createElement($dom, 'td', 'grade-percentage', null, $grade_percentage . '%'));
-                    $grade_row->appendChild($this->createElement($dom, 'td', 'grade-letter', null, $grade_letter));
-                } else {
-                    $grade_row->appendChild($this->createElement($dom, 'td', 'grade-total', null, $grade->total));
-                    $grade_row->appendChild($this->createElement($dom, 'td', 'grade-score', null, $this->processScore($grade->score)));
-                    $grade_row->appendChild($this->createElement($dom, 'td', 'grade-percentage', null, $grade_percentage . '%'));
-                }
-                $grade_table->appendChild($grade_row);
-            }
+            // foreach ($report_card->grades as $grade) {
+            //     $grade_row = $this->createElement($dom, 'tr', 'grade-row');
+            //     $grade_row->appendChild($this->createElement($dom, 'td', 'grade-date', null, $grade->date));
+            //     $grade_row->appendChild($this->createElement($dom, 'td', 'grade-name', null, $grade->name));
+            //     $grade_percentage = round((float)$grade->score / (float)$grade->total * 100);
+            //     if ($atts['type'] == 'all') {
+            //         $type_td = $this->createElement($dom, 'td', 'grade-type');
+            //         $type_td->appendChild($this->createElement($dom, 'a', 'grade-type-text', null, $grade->type, ['href' => $grade->type]));
+            //         $grade_row->appendChild($type_td);
+            //         $grade_letter = $this->getLetterGrade($grade_percentage);
+            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-percentage', null, $grade_percentage . '%'));
+            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-letter', null, $grade_letter));
+            //     } else {
+            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-total', null, $grade->total));
+            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-score', null, $this->processScore($grade->score)));
+            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-percentage', null, $grade_percentage . '%'));
+            //     }
+            //     $grade_table->appendChild($grade_row);
+            // }
             
             /**
              * Filters the final HTML output of the resume.
@@ -204,9 +204,9 @@ class ReportCardShortcode {
              * @param array  $sections The resume sections data
              * @return string The filtered HTML
              */
-            $html = apply_filters('tigr_report_card_html_output', $dom->saveHTML(), $report_card);
+            // $html = apply_filters('tigr_report_card_html_output', $dom->saveHTML(), $report_card);
             
-            return $html;
+            // return $html;
         } else {
             $not_logged_in_message = $this->createElement($dom, 'div', 'not-logged-in-message');
             $not_logged_in_message->appendChild($this->createElement($dom, 'p', 'not-logged-in-message-text', null, 'Please log in to view your report card.'));

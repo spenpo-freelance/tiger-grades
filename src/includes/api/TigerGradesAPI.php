@@ -35,6 +35,9 @@ class TigerGradesAPI {
         $this->msft_client_secret = getenv('MSFT_CLIENT_SECRET');
         $this->client_credentials_url = "https://login.microsoftonline.com/{$this->msft_tenant_id}/oauth2/v2.0/token";
 
+        // Verify URL construction
+        error_log("TigerGrades API Debug: Attempting to access token URL: " . $this->client_credentials_url);
+
         $ch = curl_init();
 
         // Form data for the POST request
@@ -45,6 +48,14 @@ class TigerGradesAPI {
             'grant_type' => 'client_credentials'
         ]);
 
+        error_log("TigerGrades API Debug: Post data (excluding secret): " . 
+            http_build_query([
+                'client_id' => $this->msft_client_id,
+                'scope' => 'https://graph.microsoft.com/.default',
+                'grant_type' => 'client_credentials'
+            ])
+        );
+
         curl_setopt($ch, CURLOPT_URL, $this->client_credentials_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -53,19 +64,30 @@ class TigerGradesAPI {
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/x-www-form-urlencoded'
         ]);
+        
+        // Add verbose debugging
+        curl_setopt($ch, CURLOPT_VERBOSE, true);
+        $verbose = fopen('php://temp', 'w+');
+        curl_setopt($ch, CURLOPT_STDERR, $verbose);
 
         $response = curl_exec($ch);
         
-        // Add error handling for curl execution
         if ($response === false) {
             error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
+            rewind($verbose);
+            $verboseLog = stream_get_contents($verbose);
+            error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
             curl_close($ch);
             return;
         }
 
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($http_code !== 200) {
-            error_log("TigerGrades API Error: Token endpoint returned status code: $http_code - Response: " . $response);
+            error_log("TigerGrades API Error: Token endpoint returned status code: $http_code");
+            error_log("TigerGrades API Debug: Raw response: " . print_r($response, true));
+            rewind($verbose);
+            $verboseLog = stream_get_contents($verbose);
+            error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
             curl_close($ch);
             return;
         }
