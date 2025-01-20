@@ -18,9 +18,9 @@ jobs:
       - name: Set deployment path
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "DEPLOY_PATH=${{ secrets.TIGR_CONTACT_PATH }}/wp-content/plugins/tigr-grades/" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/wp-content/plugins/tiger-grades/" >> $GITHUB_ENV
           else
-            echo "DEPLOY_PATH=${{ secrets.TIGR_CONTACT_PATH }}/staging/wp-content/plugins/tigr-grades/" >> $GITHUB_ENV
+            echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/staging/wp-content/plugins/tiger-grades/" >> $GITHUB_ENV
           fi
 
       - name: Deploy via Rsync
