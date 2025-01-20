@@ -2,6 +2,7 @@
 namespace Spenpo\TigerGrades\API;
 
 use WP_REST_Response;
+use WP_Error;
 use stdClass;
 use DateTime;
 use Spenpo\TigerGrades\API\JwtTokenManager;
@@ -149,31 +150,65 @@ class TigerGradesAPI {
 
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Authorization: Bearer {$access_token}"
         ]);
 
         $response = curl_exec($ch);
-        $data = json_decode($response);
+        
+        // Add error handling for curl execution
+        if ($response === false) {
+            error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
+            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
+        }
+
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($http_code !== 200) {
+            error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
+            return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
+        }
+
         curl_close($ch);
 
-        // Get the path to the tigers.json file
-        // $json_file = dirname(__DIR__, 2) . '/data/tigers.json';
+        $data = json_decode($response);
+        
+        // Check for JSON decode errors
+        if ($data === null) {
+            error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
+            return new WP_Error('json_error', 'Failed to parse API response');
+        }
+
+        // Validate expected data structure
+        if (!isset($data->text) || !is_array($data->text)) {
+            error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
+            return new WP_Error('data_error', 'Invalid data structure in API response');
+        }
+
         $student_id = get_user_meta($user_id, 'tigr_std_id', true);
-
-        // Read and decode JSON file
-        // $json_content = file_get_contents($json_file);
-        // $data = json_decode($json_content);
-
-        // Initialize result object
-        $result = new stdClass();
-        $result->grades = [];
+        if (empty($student_id)) {
+            error_log("TigerGrades API Error: No student ID found for user $user_id");
+            return new WP_Error('user_error', 'Student ID not found');
+        }
 
         $dates = $data->text[0];
         $types = $data->text[1];
         $totals = $data->text[2];
         $names = $data->text[3];
+
+        // Validate required data arrays
+        if (empty($dates) || empty($types) || empty($totals) || empty($names)) {
+            error_log("TigerGrades API Error: Missing required data arrays - " . 
+                     "Dates: " . json_encode($dates) . 
+                     ", Types: " . json_encode($types) . 
+                     ", Totals: " . json_encode($totals) . 
+                     ", Names: " . json_encode($names));
+            return new WP_Error('data_error', 'Missing required grade data');
+        }
+
+        // Initialize result object
+        $result = new stdClass();
+        $result->grades = [];
 
         // Find student's data array
         $student_data = null;
@@ -184,45 +219,48 @@ class TigerGradesAPI {
             }
         }
 
-        if ($student_data) {
-            $result->name = $student_data[1];
-            $result->avg = new stdClass();
-            $result->avg->final = $student_data[2];
-            $result->avg->{$names[3]} = $student_data[3];
-            $result->avg->{$names[4]} = $student_data[4];
-            $result->avg->{$names[5]} = $student_data[5];
-            $result->avg->{$names[6]} = $student_data[6];
-            
-            // Start from index 7 to skip header columns
-            for ($i = 7; $i < count($dates); $i++) {
-                // Skip if date is empty
-                if (empty($dates[$i])) continue;
-
-                if ($type !== 'all' && $types[$i] !== $type) continue;
-
-                $grade = new stdClass();
-                $grade->date = $dates[$i];
-                $grade->type = $types[$i];
-                $grade->total = $totals[$i];
-                $grade->name = $names[$i];
-                $grade->score = $student_data[$i];
-
-                $result->grades[] = $grade;
-            }
-
-            // Sort the grades array based on the specified field
-            usort($result->grades, function($a, $b) use ($sort_by) {
-                if ($sort_by === 'date') {
-                    $date_a = DateTime::createFromFormat('n/j/Y', $a->date);
-                    $date_b = DateTime::createFromFormat('n/j/Y', $b->date);
-                    
-                    if ($date_a > $date_b) return -1;
-                    if ($date_a < $date_b) return 1;
-                    return 0;
-                }
-                return strcmp($a->$sort_by, $b->$sort_by);
-            });
+        if (!$student_data) {
+            error_log("TigerGrades API Error: No data found for student ID $student_id");
+            return new WP_Error('data_error', 'Student data not found');
         }
+
+        $result->name = $student_data[1];
+        $result->avg = new stdClass();
+        $result->avg->final = $student_data[2];
+        $result->avg->{$names[3]} = $student_data[3];
+        $result->avg->{$names[4]} = $student_data[4];
+        $result->avg->{$names[5]} = $student_data[5];
+        $result->avg->{$names[6]} = $student_data[6];
+        
+        // Start from index 7 to skip header columns
+        for ($i = 7; $i < count($dates); $i++) {
+            // Skip if date is empty
+            if (empty($dates[$i])) continue;
+
+            if ($type !== 'all' && $types[$i] !== $type) continue;
+
+            $grade = new stdClass();
+            $grade->date = $dates[$i];
+            $grade->type = $types[$i];
+            $grade->total = $totals[$i];
+            $grade->name = $names[$i];
+            $grade->score = $student_data[$i];
+
+            $result->grades[] = $grade;
+        }
+
+        // Sort the grades array based on the specified field
+        usort($result->grades, function($a, $b) use ($sort_by) {
+            if ($sort_by === 'date') {
+                $date_a = DateTime::createFromFormat('n/j/Y', $a->date);
+                $date_b = DateTime::createFromFormat('n/j/Y', $b->date);
+                
+                if ($date_a > $date_b) return -1;
+                if ($date_a < $date_b) return 1;
+                return 0;
+            }
+            return strcmp($a->$sort_by, $b->$sort_by);
+        });
 
         return $result;
     }
