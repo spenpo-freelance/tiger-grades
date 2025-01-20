@@ -48,15 +48,37 @@ class TigerGradesAPI {
         curl_setopt($ch, CURLOPT_URL, $this->client_credentials_url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_POST, true); // Set request method to POST
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData); // Add form data
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             'Content-Type: application/x-www-form-urlencoded'
         ]);
 
         $response = curl_exec($ch);
-        $data = json_decode($response);
+        
+        // Add error handling for curl execution
+        if ($response === false) {
+            error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
+            curl_close($ch);
+            return;
+        }
+
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($http_code !== 200) {
+            error_log("TigerGrades API Error: Token endpoint returned status code: $http_code - Response: " . $response);
+            curl_close($ch);
+            return;
+        }
+
         curl_close($ch);
+
+        $data = json_decode($response);
+        
+        // Check if we got a valid token response
+        if (!isset($data->access_token) || !isset($data->expires_in)) {
+            error_log("TigerGrades API Error: Invalid token response - " . json_encode($data));
+            return;
+        }
 
         $this->jwt_token_manager = new JwtTokenManager('tigr_graph_api');
         $this->jwt_token_manager->store_token($data->access_token, $data->expires_in);
