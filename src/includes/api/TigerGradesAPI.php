@@ -6,6 +6,7 @@ use WP_Error;
 use stdClass;
 use DateTime;
 use Spenpo\TigerGrades\API\JwtTokenManager;
+use Exception;
 /**
  * Handles all TigerGrades API functionality and route registration.
  * 
@@ -24,92 +25,15 @@ class TigerGradesAPI {
     private $msft_client_id;
     private $msft_client_secret;
     private $client_credentials_url;
+    private $api_errors;
 
     /**
      * Private constructor to prevent direct instantiation.
      * Use getInstance() instead.
      */
     private function __construct() {
-        $this->msft_tenant_id = getenv('MSFT_TENANT_ID');
-        $this->msft_client_id = getenv('MSFT_CLIENT_ID');
-        $this->msft_client_secret = getenv('MSFT_CLIENT_SECRET');
-        $this->client_credentials_url = "https://login.microsoftonline.com/{$this->msft_tenant_id}/oauth2/v2.0/token";
-
-        // Verify URL construction
-        error_log("TigerGrades API Debug: Attempting to access token URL: " . $this->client_credentials_url);
-
-        $ch = curl_init();
-
-        // Form data for the POST request
-        $postData = http_build_query([
-            'client_id' => $this->msft_client_id,
-            'scope' => 'https://graph.microsoft.com/.default',
-            'client_secret' => $this->msft_client_secret,
-            'grant_type' => 'client_credentials'
-        ]);
-
-        error_log("TigerGrades API Debug: Post data (excluding secret): " . 
-            http_build_query([
-                'client_id' => $this->msft_client_id,
-                'scope' => 'https://graph.microsoft.com/.default',
-                'grant_type' => 'client_credentials'
-            ])
-        );
-
-        curl_setopt($ch, CURLOPT_URL, $this->client_credentials_url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/x-www-form-urlencoded'
-        ]);
-        
-        // Add verbose debugging
-        curl_setopt($ch, CURLOPT_VERBOSE, true);
-        $verbose = fopen('php://temp', 'w+');
-        curl_setopt($ch, CURLOPT_STDERR, $verbose);
-
-        $response = curl_exec($ch);
-        
-        if ($response === false) {
-            error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
-            rewind($verbose);
-            $verboseLog = stream_get_contents($verbose);
-            error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
-            curl_close($ch);
-            return;
-        }
-
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($http_code !== 200) {
-            error_log("TigerGrades API Error: Token endpoint returned status code: $http_code");
-            error_log("TigerGrades API Debug: Raw response: " . print_r($response, true));
-            rewind($verbose);
-            $verboseLog = stream_get_contents($verbose);
-            error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
-            curl_close($ch);
-            return;
-        }
-
-        curl_close($ch);
-
-        $data = json_decode($response);
-        
-        // Check if we got a valid token response
-        if (!isset($data->access_token) || !isset($data->expires_in)) {
-            error_log("TigerGrades API Error: Invalid token response - " . json_encode($data));
-            return;
-        }
-
-        $this->jwt_token_manager = new JwtTokenManager('tigr_graph_api');
-        $this->jwt_token_manager->store_token($data->access_token, $data->expires_in);
-
-        $this->msft_user_id = getenv('MSFT_USER_ID');
-        $this->gradebook_item_id = getenv('GRADEBOOK_ITEM_ID');
-        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
-
         $this->register_routes();
+        $this->api_errors = array();
     }
 
     /**
@@ -122,6 +46,116 @@ class TigerGradesAPI {
             self::$instance = new self();
         }
         return self::$instance;
+    }
+
+    private function getCredentials() {
+        // Load credentials when needed
+        if (empty($this->msft_tenant_id) || empty($this->msft_client_id) || empty($this->msft_client_secret)) {
+            error_log("TigerGrades API Debug: Loading environment variables");
+            $this->msft_tenant_id = getenv('MSFT_TENANT_ID');
+            $this->msft_client_id = getenv('MSFT_CLIENT_ID');
+            $this->msft_client_secret = getenv('MSFT_CLIENT_SECRET');
+
+            error_log("TigerGrades API Debug: MSFT_TENANT_ID = " . ($this->msft_tenant_id ? 'set' : 'not set'));
+            error_log("TigerGrades API Debug: MSFT_CLIENT_ID = " . ($this->msft_client_id ? 'set' : 'not set'));
+            error_log("TigerGrades API Debug: MSFT_CLIENT_SECRET = " . ($this->msft_client_secret ? 'set' : 'not set'));
+
+            if (empty($this->msft_tenant_id) || empty($this->msft_client_id) || empty($this->msft_client_secret)) {
+                throw new Exception("Required Microsoft Graph API credentials are not set");
+            }
+        }
+
+        return [
+            'tenant_id' => $this->msft_tenant_id,
+            'client_id' => $this->msft_client_id,
+            'client_secret' => $this->msft_client_secret
+        ];
+    }
+
+    private function getAccessToken() {
+        try {
+            $credentials = $this->getCredentials();
+            
+            $this->client_credentials_url = "https://login.microsoftonline.com/{$credentials['tenant_id']}/oauth2/v2.0/token";
+            error_log("TigerGrades API Debug: Attempting to access token URL: " . $this->client_credentials_url);
+
+            $ch = curl_init();
+
+            // Form data for the POST request
+            $postData = http_build_query([
+                'client_id' => $credentials['client_id'],
+                'scope' => 'https://graph.microsoft.com/.default',
+                'client_secret' => $credentials['client_secret'],
+                'grant_type' => 'client_credentials'
+            ]);
+
+            error_log("TigerGrades API Debug: Post data (excluding secret): " . 
+                http_build_query([
+                    'client_id' => $credentials['client_id'],
+                    'scope' => 'https://graph.microsoft.com/.default',
+                    'grant_type' => 'client_credentials'
+                ])
+            );
+
+            curl_setopt($ch, CURLOPT_URL, $this->client_credentials_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/x-www-form-urlencoded'
+            ]);
+            
+            // Add verbose debugging
+            curl_setopt($ch, CURLOPT_VERBOSE, true);
+            $verbose = fopen('php://temp', 'w+');
+            curl_setopt($ch, CURLOPT_STDERR, $verbose);
+
+            $response = curl_exec($ch);
+            
+            if ($response === false) {
+                error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
+                rewind($verbose);
+                $verboseLog = stream_get_contents($verbose);
+                error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
+                curl_close($ch);
+                return false;
+            }
+
+            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            if ($http_code !== 200) {
+                error_log("TigerGrades API Error: Token endpoint returned status code: $http_code");
+                error_log("TigerGrades API Debug: Raw response: " . print_r($response, true));
+                rewind($verbose);
+                $verboseLog = stream_get_contents($verbose);
+                error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
+                curl_close($ch);
+                return false;
+            }
+
+            curl_close($ch);
+
+            $data = json_decode($response);
+            
+            // Check if we got a valid token response
+            if (!isset($data->access_token) || !isset($data->expires_in)) {
+                error_log("TigerGrades API Error: Invalid token response - " . json_encode($data));
+                return false;
+            }
+
+            $this->jwt_token_manager = new JwtTokenManager('tigr_graph_api');
+            $this->jwt_token_manager->store_token($data->access_token, $data->expires_in);
+
+            $this->msft_user_id = getenv('MSFT_USER_ID');
+            $this->gradebook_item_id = getenv('GRADEBOOK_ITEM_ID');
+            $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
+
+            return true;
+        } catch (Exception $e) {
+            error_log("TigerGrades API Error: " . $e->getMessage());
+            $this->api_errors[] = $e->getMessage();
+            return false;
+        }
     }
 
     /**
@@ -186,6 +220,10 @@ class TigerGradesAPI {
      * @return array Formatted report card sections
      */
     public function fetchReportCard($user_id, $sort_by = 'date', $type = 'all', $class_id = 'english') {
+        if (!$this->getAccessToken()) {
+            return new WP_Error('api_error', 'Failed to acquire access token');
+        }
+
         $access_token = $this->jwt_token_manager->get_token();
 
         $url = "{$this->graph_api_url}/{$class_id}/usedRange";
