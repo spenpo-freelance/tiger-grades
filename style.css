@@ -1,0 +1,50 @@
+.page-id-117, .parent-pageid-117 {
+    --wp--style--global--content-size: 800px; /* Adjust the value as needed */
+}
+
+.grade-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.grade-table-header-row {
+    background-color: #f2f2f2;
+}
+
+.grade-table tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.grade-letter, .grade-percentage, .grade-total, .grade-score {
+    text-align: center;
+}
+
+.loading {
+    width: 50px; /* Adjust size as needed */
+    height: 50px;
+    border: 5px solid rgba(0, 0, 0, 0.1); /* Light border */
+    border-top-color: var(--primary); /* Darker border for the spinning effect */
+    border-radius: 50%; /* Make it circular */
+    animation: spin 1s linear infinite; /* Spin animation */
+    margin: 20px auto;
+}
+  
+@keyframes spin {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+}
+
+.breadcrumbs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.breadcrumbs a {
+    text-decoration: none;
+    color: var(--primary);
+}
