@@ -1,0 +1,34 @@
+name: Deploy Plugin
+
+on:
+  push:
+    branches:
+      - main
+      - staging
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set deployment path
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "DEPLOY_PATH=${{ secrets.TIGR_GRADES_PATH }}/wp-content/plugins/tigr-grades/" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_PATH=${{ secrets.TIGR_GRADES_PATH }}/staging/wp-content/plugins/tigr-grades/" >> $GITHUB_ENV
+          fi
+
+      - name: Deploy via Rsync
+        uses: burnett01/rsync-deployments@5.2.1
+        with:
+          switches: -avzr --delete
+          path: src/
+          remote_path: ${{ env.DEPLOY_PATH }}
+          remote_host: ${{ secrets.HOSTINGER_HOST }}
+          remote_user: ${{ secrets.HOSTINGER_USERNAME }}
+          remote_key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+          remote_port: ${{ secrets.HOSTINGER_PORT }}
