@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - staging
+      - release
   workflow_dispatch: # Allows manual triggers as needed
 
 jobs:
@@ -17,10 +18,12 @@ jobs:
 
       - name: Set deployment path
         run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/wp-content/plugins/tiger-grades/" >> $GITHUB_ENV
-          else
+          if [[ "${{ github.ref }}" == "refs/heads/release" ]]; then
+            echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/release/wp-content/plugins/tiger-grades/" >> $GITHUB_ENV
+          else if [[ "${{ github.ref }}" == "refs/heads/staging" ]]; then
             echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/staging/wp-content/plugins/tiger-grades/" >> $GITHUB_ENV
+          else
+            echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/wp-content/plugins/tiger-grades/" >> $GITHUB_ENV
           fi
 
       - name: Deploy via Rsync
