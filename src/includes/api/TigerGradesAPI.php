@@ -72,7 +72,7 @@ class TigerGradesAPI {
         ];
     }
 
-    private function getAccessToken() {
+    private function getAccessToken($class_id) {
         try {
             $credentials = $this->getCredentials();
             
@@ -147,7 +147,7 @@ class TigerGradesAPI {
             $this->jwt_token_manager->store_token($data->access_token, $data->expires_in);
 
             $this->msft_user_id = getenv('MSFT_USER_ID');
-            $this->gradebook_item_id = getenv('GRADEBOOK_ITEM_ID');
+            $this->gradebook_item_id = getenv(($class_id == 'social_studies' ? 'S1' : 'S2') . '_GRADEBOOK_ITEM_ID');
             $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
             return true;
@@ -220,7 +220,7 @@ class TigerGradesAPI {
      * @return array Formatted report card sections
      */
     public function fetchReportCard($user_id, $sort_by = 'date', $type = 'all', $class_id = 'english') {
-        if (!$this->getAccessToken()) {
+        if (!$this->getAccessToken($class_id)) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
 

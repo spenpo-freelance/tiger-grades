@@ -28,7 +28,8 @@ jQuery(document).ready(function($) {
         // Create rows
         const $tbody = $('<tbody>');
         grades.forEach(grade => {
-            const percentage = Math.round((parseFloat(grade.score) / parseFloat(grade.total)) * 100);
+            const percentage = grade.score === '' ? 'IOU' : Math.round((parseFloat(grade.score) / parseFloat(grade.total)) * 100);
+            const percentageText = percentage === 'IOU' ? '--' : percentage + '%';
             
             const $row = $('<tr>').addClass('grade-row')
                 .append($('<td>').addClass('grade-date').text(grade.date))
@@ -39,14 +40,14 @@ jQuery(document).ready(function($) {
                     $('<td>').addClass('grade-type').append(
                         $('<a>').attr('href', grade.type).text(grade.type)
                     ),
-                    $('<td>').addClass('grade-percentage').text(`${percentage}%`),
+                    $('<td>').addClass('grade-percentage').text(percentageText),
                     $('<td>').addClass('grade-letter').text(getLetterGrade(percentage))
                 );
             } else {
                 $row.append(
                     $('<td>').addClass('grade-total').text(grade.total),
                     $('<td>').addClass('grade-score').text(processScore(grade.score)),
-                    $('<td>').addClass('grade-percentage').text(`${percentage}%`)
+                    $('<td>').addClass('grade-percentage').text(percentageText)
                 );
             }
 
@@ -57,6 +58,7 @@ jQuery(document).ready(function($) {
     }
 
     function getLetterGrade(percentage) {
+        if (percentage === 'IOU') return '--';
         if (percentage >= 90) return 'A';
         if (percentage >= 80) return 'B';
         if (percentage >= 70) return 'C';
@@ -64,6 +66,7 @@ jQuery(document).ready(function($) {
     }
 
     function processScore(score) {
+        if (score === '') return '--';
         if (score === '0') return '00';
         if (score === 'e') return 'EXEMPT';
         return score;

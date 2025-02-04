@@ -125,7 +125,7 @@ class ReportCardShortcode {
                 'tiger-grades-report-card',
                 plugins_url('tiger-grades/js/report-card.js', dirname(__FILE__, 3)),
                 array('jquery'),
-                '1.0.0',
+                '1.0.0.0',
                 true
             );
 
