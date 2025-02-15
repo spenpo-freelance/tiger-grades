@@ -48,3 +48,25 @@
     text-decoration: none;
     color: var(--primary);
 }
+
+.student-name-container {
+    margin-bottom: 10px;
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.tabs button {
+    padding: 10px 20px;
+    border-radius: 5px 5px 0 0;
+    border: 1px solid #ccc;
+    background-color: #f2f2f2;
+    cursor: pointer;
+}
+
+.tabs button.active {
+    background-color: #03c4eb;
+}

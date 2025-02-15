@@ -1,12 +1,134 @@
-INSERT INTO `wp_posts` (`ID`, `post_author`, `post_date`, `post_date_gmt`, `post_content`, `post_title`, `post_excerpt`, `post_status`, `comment_status`, `ping_status`, `post_password`, `post_name`, `to_ping`, `pinged`, `post_modified`, `post_modified_gmt`, `post_content_filtered`, `post_parent`, `guid`, `menu_order`, `post_type`, `post_mime_type`, `comment_count`) VALUES
-(117, 1, '2025-01-07 09:05:54', '2025-01-07 09:05:54', '<!-- wp:heading -->\n<h2 class=\"wp-block-heading\">Your child is in the following classes</h2>\n<!-- /wp:heading -->\n\n<!-- wp:group {\"layout\":{\"type\":\"grid\",\"columnCount\":2,\"minimumColumnWidth\":null}} -->\n<div class=\"wp-block-group\"><!-- wp:image {\"lightbox\":{\"enabled\":false},\"id\":138,\"sizeSlug\":\"full\",\"linkDestination\":\"custom\"} -->\n<figure class=\"wp-block-image size-full\"><a href=\"/grades/english\"><img src=\"http://localhost:8080/wp-content/uploads/2025/01/english_class.png\" alt=\"\" class=\"wp-image-138\"/></a></figure>\n<!-- /wp:image -->\n\n<!-- wp:image {\"lightbox\":{\"enabled\":false},\"id\":137,\"sizeSlug\":\"full\",\"linkDestination\":\"custom\"} -->\n<figure class=\"wp-block-image size-full\"><a href=\"/grades/social-studies\"><img src=\"http://localhost:8080/wp-content/uploads/2025/01/history_class.png\" alt=\"\" class=\"wp-image-137\"/></a></figure>\n<!-- /wp:image --></div>\n<!-- /wp:group -->\n\n<!-- wp:group {\"layout\":{\"type\":\"grid\",\"columnCount\":2,\"minimumColumnWidth\":null}} -->\n<div class=\"wp-block-group\"><!-- wp:heading {\"textAlign\":\"center\",\"level\":3} -->\n<h3 class=\"wp-block-heading has-text-align-center\"><a href=\"http://localhost:8080/grades/english/\" data-type=\"page\" data-id=\"132\">English</a></h3>\n<!-- /wp:heading -->\n\n<!-- wp:heading {\"textAlign\":\"center\",\"level\":3} -->\n<h3 class=\"wp-block-heading has-text-align-center\"><a href=\"/grades/social-studies\">Social Studies</a></h3>\n<!-- /wp:heading --></div>\n<!-- /wp:group -->\n\n<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->', 'Grades', '', 'publish', 'closed', 'closed', '', 'grades', '', '', '2025-01-20 01:56:46', '2025-01-20 01:56:46', '', 0, 'http://localhost:8080/?page_id=117', 0, 'page', '', 0),
-(119, 1, '2025-01-07 11:13:42', '2025-01-07 11:13:42', '<!-- wp:shortcode -->\n[tigr_report_card type=\"homework\" class_id=\"english\"]\n<!-- /wp:shortcode -->', 'Homework Assignments', '', 'publish', 'closed', 'closed', '', 'homework', '', '', '2025-01-08 06:04:33', '2025-01-08 06:04:33', '', 132, 'http://localhost:8080/?page_id=119', 0, 'page', '', 0),
-(123, 1, '2025-01-07 11:41:58', '2025-01-07 11:41:58', '<!-- wp:shortcode -->\n[tigr_report_card type=\"test\"]\n<!-- /wp:shortcode -->', 'Tests', '', 'publish', 'closed', 'closed', '', 'test', '', '', '2025-01-08 04:03:11', '2025-01-08 04:03:11', '', 132, 'http://localhost:8080/?page_id=123', 0, 'page', '', 0),
-(126, 1, '2025-01-07 11:44:23', '2025-01-07 11:44:23', '<!-- wp:shortcode -->\n[tigr_report_card type=\"classwork\"]\n<!-- /wp:shortcode -->', 'Classwork', '', 'publish', 'closed', 'closed', '', 'classwork', '', '', '2025-01-08 04:02:53', '2025-01-08 04:02:53', '', 132, 'http://localhost:8080/?page_id=126', 0, 'page', '', 0),
-(129, 1, '2025-01-07 11:45:40', '2025-01-07 11:45:40', '<!-- wp:shortcode -->\n[tigr_report_card type=\"writing\"]\n<!-- /wp:shortcode -->', 'Writing', '', 'publish', 'closed', 'closed', '', 'writing', '', '', '2025-01-08 04:03:19', '2025-01-08 04:03:19', '', 132, 'http://localhost:8080/?page_id=129', 0, 'page', '', 0),
-(132, 1, '2025-01-08 04:02:23', '2025-01-08 04:02:23', '<!-- wp:shortcode -->\n[tigr_report_card class_id=\"english\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->', 'English Grades', '', 'publish', 'closed', 'closed', '', 'english', '', '', '2025-01-20 05:53:32', '2025-01-20 05:53:32', '', 117, 'http://localhost:8080/?page_id=132', 0, 'page', '', 0),
-(145, 1, '2025-01-08 04:43:55', '2025-01-08 04:43:55', '<!-- wp:shortcode -->\n[tigr_report_card class_id=\"social_studies\"]\n<!-- /wp:shortcode -->', 'Social Studies Grades', '', 'publish', 'closed', 'closed', '', 'social-studies', '', '', '2025-01-08 06:13:49', '2025-01-08 06:13:49', '', 117, 'http://localhost:8080/?page_id=145', 0, 'page', '', 0),
-(152, 1, '2025-01-08 06:17:04', '2025-01-08 06:17:04', '<!-- wp:shortcode -->\n[tigr_report_card type=\"quiz\" class_id=\"social_studies\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->', 'Quizzes', '', 'publish', 'closed', 'closed', '', 'quiz', '', '', '2025-01-08 06:17:30', '2025-01-08 06:17:30', '', 145, 'http://localhost:8080/?page_id=152', 0, 'page', '', 0),
-(154, 1, '2025-01-08 06:18:58', '2025-01-08 06:18:58', '<!-- wp:shortcode -->\n[tigr_report_card type=\"test\" class_id=\"social_studies\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->', 'Tests', '', 'publish', 'closed', 'closed', '', 'test', '', '', '2025-01-08 06:18:58', '2025-01-08 06:18:58', '', 145, 'http://localhost:8080/?page_id=154', 0, 'page', '', 0),
-(157, 1, '2025-01-08 06:21:42', '2025-01-08 06:21:42', '<!-- wp:shortcode -->\n[tigr_report_card type=\"classwork\" class_id=\"social_studies\"]\n<!-- /wp:shortcode -->', 'Classwork', '', 'publish', 'closed', 'closed', '', 'classwork', '', '', '2025-01-08 06:21:42', '2025-01-08 06:21:42', '', 145, 'http://localhost:8080/?page_id=157', 0, 'page', '', 0),
-(160, 1, '2025-01-08 06:22:43', '2025-01-08 06:22:43', '<!-- wp:shortcode -->\n[tigr_report_card type=\"project\" class_id=\"social_studies\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:paragraph -->\n<p></p>\n<!-- /wp:paragraph -->', 'Projects', '', 'publish', 'closed', 'closed', '', 'project', '', '', '2025-01-08 06:22:43', '2025-01-08 06:22:43', '', 145, 'http://localhost:8080/?page_id=160', 0, 'page', '', 0);
+SELECT option_value into @site_url FROM wp_options WHERE option_name = 'siteurl';
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`) 
+VALUES (1, 
+    CONCAT(
+        '<!-- wp:heading -->',
+        '<h2 class="wp-block-heading">Your child is in the following classes</h2>',
+        '<!-- /wp:heading -->',
+        '<!-- wp:group {"layout":{"type":"grid","columnCount":3,"minimumColumnWidth":null}} -->',
+        '<div class="wp-block-group">',
+        '<!-- wp:image {"lightbox":{"enabled":false},"id":1569,"sizeSlug":"full","linkDestination":"custom"} -->',
+        '<figure class="wp-block-image size-full"><a href="/grades/english/"><img src="', @site_url, '/wp-content/uploads/2025/01/english_class.png" alt="enlgish book" class="wp-image-1569"/></a></figure>',
+        '<!-- /wp:image -->',
+        '<!-- wp:image {"lightbox":{"enabled":false},"id":1569,"sizeSlug":"full","linkDestination":"custom"} -->',
+        '<figure class="wp-block-image size-full"><a href="/grades/science/"><img src="', @site_url, '/wp-content/uploads/2025/01/science_class.png" alt="science book" class="wp-image-1569"/></a></figure>',
+        '<!-- /wp:image -->',
+        '<!-- wp:image {"lightbox":{"enabled":false},"id":1571,"sizeSlug":"full","linkDestination":"custom"} -->',
+        '<figure class="wp-block-image size-full"><a href="/grades/social-studies"><img src="', @site_url, '/wp-content/uploads/2025/01/history_class.png" alt="history book" class="wp-image-1571"/></a></figure>',
+        '<!-- /wp:image -->',
+        '</div>',
+        '<!-- /wp:group -->',
+        '<!-- wp:paragraph -->',
+        '<p></p>',
+        '<!-- /wp:paragraph -->',
+        '<!-- wp:group {"layout":{"type":"grid","columnCount":3,"minimumColumnWidth":null}} -->',
+        '<div class="wp-block-group">',
+        '<!-- wp:heading {"textAlign":"center","level":3} -->',
+        '<h3 class="wp-block-heading has-text-align-center"><a href="/grades/english/" data-type="page" data-id="132">English</a></h3>',
+        '<!-- /wp:heading -->',
+        '<!-- wp:heading {"textAlign":"center","level":3} -->',
+        '<h3 class="wp-block-heading has-text-align-center"><a href="/grades/science/" data-type="page" data-id="132">Science</a></h3>',
+        '<!-- /wp:heading -->',
+        '<!-- wp:heading {"textAlign":"center","level":3} -->',
+        '<h3 class="wp-block-heading has-text-align-center"><a href="/grades/social-studies">Social Studies</a></h3>',
+        '<!-- /wp:heading --></div>',
+        '<!-- /wp:group -->',
+        '<!-- wp:paragraph -->',
+        '<p></p>',
+        '<!-- /wp:paragraph -->'
+    ), 
+    'Grades', 'publish', 'grades', 0, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @grades_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @grades_page_id) WHERE ID = @grades_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="english" semester="2, 1"]\n<!-- /wp:shortcode -->', 'English Grades', 'publish', 'english', @grades_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @english_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @english_page_id) WHERE ID = @english_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="english" semester="2, 1" type="homework"]\n<!-- /wp:shortcode -->', 'Homework Assignments', 'publish', 'homework', @english_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @e_homework_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @homework_page_id) WHERE ID = @homework_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="english" semester="2, 1" type="test"]\n<!-- /wp:shortcode -->', 'Tests', 'publish', 'test', @english_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @e_test_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @test_page_id) WHERE ID = @test_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="english" semester="2, 1" type="classwork"]\n<!-- /wp:shortcode -->', 'Classwork', 'publish', 'classwork', @english_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @e_classwork_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @classwork_page_id) WHERE ID = @classwork_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="english" semester="2, 1" type="writing"]\n<!-- /wp:shortcode -->', 'Writing', 'publish', 'writing', @english_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @e_writing_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @writing_page_id) WHERE ID = @writing_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="social_studies" semester="1"]\n<!-- /wp:shortcode -->', 'Social Studies Grades', 'publish', 'social-studies', @grades_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @social_studies_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @social_studies_page_id) WHERE ID = @social_studies_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="quiz" class_id="social_studies" semester="1"]\n<!-- /wp:shortcode -->', 'Quizzes', 'publish', 'quiz', @social_studies_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @ss_quiz_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @ss_quiz_page_id) WHERE ID = @ss_quiz_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="test" class_id="social_studies" semester="1"]\n<!-- /wp:shortcode -->', 'Tests', 'publish', 'test', @social_studies_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @ss_test_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @test_page_id) WHERE ID = @test_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="classwork" class_id="social_studies" semester="1"]\n<!-- /wp:shortcode -->', 'Classwork', 'publish', 'classwork', @social_studies_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @ss_classwork_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @classwork_page_id) WHERE ID = @classwork_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="project" class_id="social_studies" semester="1"]\n<!-- /wp:shortcode -->', 'Projects', 'publish', 'project', @social_studies_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @ss_project_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @project_page_id) WHERE ID = @project_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'Science Grades', 'publish', 'science', @grades_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @science_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @science_page_id) WHERE ID = @science_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="quiz" class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'Quizzes', 'publish', 'quiz', @science_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @s_quiz_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @quiz_page_id) WHERE ID = @quiz_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="test" class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'Tests', 'publish', 'test', @science_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @s_test_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @test_page_id) WHERE ID = @test_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="classwork" class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'Classwork', 'publish', 'classwork', @science_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @s_classwork_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @classwork_page_id) WHERE ID = @classwork_page_id;
+
+INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="project" class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'Projects', 'publish', 'project', @science_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+
+SELECT LAST_INSERT_ID() INTO @s_project_page_id;
+UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @project_page_id) WHERE ID = @project_page_id;

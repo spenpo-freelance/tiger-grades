@@ -30,6 +30,7 @@ class ReportCardShortcode {
             $attributes = shortcode_atts([
                 'type' => 'all', // default value
                 'class_id' => 'english',
+                'semester' => '1',
             ], $atts);
             
             return $this->render($attributes);
@@ -112,12 +113,12 @@ class ReportCardShortcode {
         $root->setAttribute('data-user-id', $user_id);
         $root->setAttribute('data-type', $atts['type']);
         $root->setAttribute('data-class-id', $atts['class_id']);
+        $root->setAttribute('data-semester', $atts['semester']);
         $dom->appendChild($root);
 
         if ($user_id) {
-            // Add loading state
-            $loading = $this->createElement($dom, 'div', 'loading');
-            // $loading->appendChild($this->createElement($dom, 'p', 'loading-text', null, 'Loading report card...'));
+            $loading = $this->createElement($dom, 'div', 'loading-message');
+            $loading->appendChild($this->createElement($dom, 'p', 'loading-text', null, 'Loading content...'));
             $root->appendChild($loading);
 
             // Enqueue the JavaScript
@@ -125,7 +126,7 @@ class ReportCardShortcode {
                 'tiger-grades-report-card',
                 plugins_url('tiger-grades/js/report-card.js', dirname(__FILE__, 3)),
                 array('jquery'),
-                '1.0.0.0',
+                '1.0.1',
                 true
             );
 

@@ -74,33 +74,42 @@ class DatabaseManager {
                         $prefix = static::getTablePrefix();
                         $sql = str_replace('{$wpdb->prefix}', esc_sql($prefix), $sql);
                         
-                        // error_log("SQL content after prefix replacement: " . $sql);
-                
+                        // Split SQL into individual statements
                         $statements = array_filter(
-                            array_map(
-                                'trim',
-                                explode(';', $sql)
-                            ),
+                            array_map('trim', explode(';', $sql)),
                             'strlen'
                         );
-                
+                        
+                        // Initialize variables array instead of using $GLOBALS
+                        $variables = [];
+                        
+                        // Execute each statement separately
                         foreach ($statements as $statement) {
-                            // error_log("Executing statement: " . $statement);
-                            if ($type === 'init') {
-                                $result = dbDelta($statement);
-                                // error_log("dbDelta result: " . print_r($result, true));
-                            } else if ($type === 'query') {
-                                $result = $wpdb->query($statement);
-                                // error_log("wpdb->query result: " . print_r($result, true));
+                            // Store results of SELECT queries for variable replacement
+                            if (stripos(trim($statement), 'SELECT') === 0) {
+                                // Check for INTO @variable syntax
+                                if (preg_match('/\s+INTO\s+@(\w+)/i', $statement, $matches)) {
+                                    $varName = $matches[1];
+                                    // Remove the INTO @variable part for the actual query
+                                    $select_sql = preg_replace('/\s+INTO\s+@\w+/i', '', $statement);
+                                    $result = $wpdb->get_var($select_sql);
+                                    $variables["@{$varName}"] = $result;
+                                }
                             } else {
-                                // error_log("Unknown type: " . $type);
+                                // Replace any @variables in non-SELECT statements
+                                foreach ($variables as $key => $value) {
+                                    if ($value !== null) {
+                                        $statement = str_replace($key, $wpdb->prepare('%s', $value), $statement);
+                                    }
+                                }
+                                $result = $wpdb->query($statement);
                             }
                             
-                            if (is_wp_error($result)) {
-                                throw new Exception($result->get_error_message());
+                            if ($wpdb->last_error) {
+                                throw new \Exception($wpdb->last_error);
                             }
                         }
-                
+                        
                         return [
                             'success' => true,
                             'message' => "Script executed successfully"

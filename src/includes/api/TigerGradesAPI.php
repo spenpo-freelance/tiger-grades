@@ -147,8 +147,6 @@ class TigerGradesAPI {
             $this->jwt_token_manager->store_token($data->access_token, $data->expires_in);
 
             $this->msft_user_id = getenv('MSFT_USER_ID');
-            $this->gradebook_item_id = getenv(($class_id == 'social_studies' ? 'S1' : 'S2') . '_GRADEBOOK_ITEM_ID');
-            $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
             return true;
         } catch (Exception $e) {
@@ -187,6 +185,10 @@ class TigerGradesAPI {
                         'required' => false,
                         'default' => 'english',
                         'type' => 'string'
+                    ],
+                    'semester' => [
+                        'required' => true,
+                        'type' => 'integer'
                     ]
                 ]
             ]);
@@ -204,8 +206,9 @@ class TigerGradesAPI {
         $sort_by = $request->get_param('sort_by');
         $type = $request->get_param('type');
         $class_id = $request->get_param('class_id');
+        $semester = $request->get_param('semester');
 
-        $data = $this->fetchReportCard($user_id, $sort_by, $type, $class_id);
+        $data = $this->fetchReportCard($user_id, $sort_by, $type, $class_id, $semester);
         
         return new WP_REST_Response($data, 200);
     }
@@ -219,10 +222,13 @@ class TigerGradesAPI {
      * @param string $class_id The ID of the class to fetch report card data for
      * @return array Formatted report card sections
      */
-    public function fetchReportCard($user_id, $sort_by = 'date', $type = 'all', $class_id = 'english') {
+    public function fetchReportCard($user_id, $sort_by = 'date', $type = 'all', $class_id = 'english', $semester = 1) {
         if (!$this->getAccessToken($class_id)) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
+
+        $this->gradebook_item_id = getenv('S' . $semester . '_GRADEBOOK_ITEM_ID');
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
         $access_token = $this->jwt_token_manager->get_token();
 
