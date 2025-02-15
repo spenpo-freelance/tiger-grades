@@ -46,7 +46,7 @@ function enqueue_tiger_grades_styles() {
         'tiger-grades-styles',
         plugins_url('style.css', __FILE__),
         array(),
-        '1.0.1'
+        '1.0.2'
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_styles');
