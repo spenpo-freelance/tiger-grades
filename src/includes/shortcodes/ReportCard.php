@@ -210,7 +210,9 @@ class ReportCardShortcode {
             // return $html;
         } else {
             $not_logged_in_message = $this->createElement($dom, 'div', 'not-logged-in-message');
-            $not_logged_in_message->appendChild($this->createElement($dom, 'p', 'not-logged-in-message-text', null, 'Please log in to view your report card.'));
+            $not_logged_in_message->appendChild($this->createElement($dom, 'span', 'not-logged-in-message-text', null, 'Please '));
+            $not_logged_in_message->appendChild($this->createElement($dom, 'a', 'not-logged-in-message-text', null, 'log in', ['href' => '/my-account']));
+            $not_logged_in_message->appendChild($this->createElement($dom, 'span', 'not-logged-in-message-text', null, ' to view your child\'s grades.'));
             $root->appendChild($not_logged_in_message);
             return $dom->saveHTML();
         }
