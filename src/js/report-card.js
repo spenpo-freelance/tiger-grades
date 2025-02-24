@@ -63,8 +63,8 @@ jQuery(document).ready(function($) {
         // Create rows
         const tbody = $('<tbody>');
         grades.forEach(grade => {
-            const percentage = grade.score === '' ? 'IOU' : Math.round((parseFloat(grade.score) / parseFloat(grade.total)) * 100);
-            const percentageText = percentage === 'IOU' ? '--' : percentage + '%';
+            const percentage = getPercentage(grade.score, grade.total);
+            const percentageText = `${percentage}${typeof percentage === 'number' ? '%' : ''}`;
             
             const row = $('<tr>').addClass('grade-row')
                 .append($('<td>').addClass('grade-date').text(grade.date))
@@ -92,8 +92,14 @@ jQuery(document).ready(function($) {
         return table.append(thead, tbody);
     }
 
+    function getPercentage (score, total) {
+        if (score === '') return '--';
+        if (score === 'e') return 'EXEMPT';
+        else return Math.round((parseFloat(score) / parseFloat(total)) * 100);
+    }
+
     function getLetterGrade(percentage) {
-        if (percentage === 'IOU') return '--';
+        if (typeof percentage !== 'number') return '--';
         if (percentage >= 90) return 'A';
         if (percentage >= 80) return 'B';
         if (percentage >= 70) return 'C';
