@@ -1,3 +1,0 @@
-kind: Added
-body: error handling to client credentials auth flow in constructor of TigerGradesAPI
-time: 2025-01-20T19:20:31.302426+08:00

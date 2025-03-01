@@ -1,3 +1,0 @@
-kind: Changed
-body: seed and teardown scripts dont rely on hard coded IDs
-time: 2025-02-15T16:44:48.830527+08:00

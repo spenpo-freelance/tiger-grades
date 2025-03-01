@@ -3,7 +3,7 @@
  * Manages database operations for the resume plugin.
  * 
  * @package Spenpo\TigerGrades
- * @since 1.0.0
+ * @since 0.0.0
  */
 namespace Spenpo\TigerGrades\Repositories;
 
@@ -143,11 +143,16 @@ class DatabaseManager {
      */
     public static function createDatabase() {
         $current_version = get_option('tigr_db_version', '0');
-        $plugin_version = '1.0.0';
+        $plugin_version = '0.0.3';
         
         // Always recreate database in debug/development environment
         if (defined('WP_DEBUG') && WP_DEBUG || version_compare($current_version, $plugin_version, '<')) {
-            $script_path = plugin_dir_path(dirname(__FILE__)) . '../data/seed.sql';
+            // Original relative path
+            // $script_path = plugin_dir_path(dirname(__FILE__)) . '../data/seed.sql';
+            
+            // New absolute path using plugin root directory
+            $script_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'data/seed.sql';
+            
             $result = self::executeScript($script_path, 'init');
             
             if ($result['success']) {
@@ -173,6 +178,9 @@ class DatabaseManager {
      */
     public static function teardownDatabase() {
         $script_path = plugin_dir_path(dirname(__FILE__)) . '../data/teardown.sql';
-        self::executeScript($script_path, 'query');
+        $result = self::executeScript($script_path, 'query');
+        if ($result['success']) {
+            delete_option('tigr_db_version');
+        }
     }
 } 

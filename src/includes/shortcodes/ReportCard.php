@@ -11,7 +11,7 @@ use WP_REST_Response;
  * Handles the [tigr_report_card] shortcode functionality.
  * 
  * @package Spenpo\TigerGrades
- * @since 1.0.0
+ * @since 0.0.0
  */
 class ReportCardShortcode {
     /** @var TigerGradesAPI Instance of the TigerGrades API */
@@ -126,7 +126,7 @@ class ReportCardShortcode {
                 'tiger-grades-report-card',
                 plugins_url('tiger-grades/js/report-card.js', dirname(__FILE__, 3)),
                 array('jquery'),
-                '1.0.1',
+                '1.0.3',
                 true
             );
 
@@ -199,7 +199,7 @@ class ReportCardShortcode {
             /**
              * Filters the final HTML output of the resume.
              * 
-             * @since 1.0.0
+             * @since 0.0.0
              * 
              * @param string $html     The generated HTML
              * @param array  $sections The resume sections data

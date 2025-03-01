@@ -11,7 +11,7 @@ use Exception;
  * Handles all TigerGrades API functionality and route registration.
  * 
  * @package Spenpo\TigerGrades
- * @since 1.0.0
+ * @since 0.0.0
  */
 class TigerGradesAPI {
     /** @var self|null */
