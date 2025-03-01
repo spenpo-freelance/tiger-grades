@@ -51,14 +51,14 @@ class TigerGradesAPI {
     private function getCredentials() {
         // Load credentials when needed
         if (empty($this->msft_tenant_id) || empty($this->msft_client_id) || empty($this->msft_client_secret)) {
-            error_log("TigerGrades API Debug: Loading environment variables");
+            # error_log("TigerGrades API Debug: Loading environment variables");
             $this->msft_tenant_id = getenv('MSFT_TENANT_ID');
             $this->msft_client_id = getenv('MSFT_CLIENT_ID');
             $this->msft_client_secret = getenv('MSFT_CLIENT_SECRET');
 
-            error_log("TigerGrades API Debug: MSFT_TENANT_ID = " . ($this->msft_tenant_id ? 'set' : 'not set'));
-            error_log("TigerGrades API Debug: MSFT_CLIENT_ID = " . ($this->msft_client_id ? 'set' : 'not set'));
-            error_log("TigerGrades API Debug: MSFT_CLIENT_SECRET = " . ($this->msft_client_secret ? 'set' : 'not set'));
+            # error_log("TigerGrades API Debug: MSFT_TENANT_ID = " . ($this->msft_tenant_id ? 'set' : 'not set'));
+            # error_log("TigerGrades API Debug: MSFT_CLIENT_ID = " . ($this->msft_client_id ? 'set' : 'not set'));
+            # error_log("TigerGrades API Debug: MSFT_CLIENT_SECRET = " . ($this->msft_client_secret ? 'set' : 'not set'));
 
             if (empty($this->msft_tenant_id) || empty($this->msft_client_id) || empty($this->msft_client_secret)) {
                 throw new Exception("Required Microsoft Graph API credentials are not set");
@@ -77,7 +77,7 @@ class TigerGradesAPI {
             $credentials = $this->getCredentials();
             
             $this->client_credentials_url = "https://login.microsoftonline.com/{$credentials['tenant_id']}/oauth2/v2.0/token";
-            error_log("TigerGrades API Debug: Attempting to access token URL: " . $this->client_credentials_url);
+            # error_log("TigerGrades API Debug: Attempting to access token URL: " . $this->client_credentials_url);
 
             $ch = curl_init();
 
@@ -89,13 +89,13 @@ class TigerGradesAPI {
                 'grant_type' => 'client_credentials'
             ]);
 
-            error_log("TigerGrades API Debug: Post data (excluding secret): " . 
+            /*error_log("TigerGrades API Debug: Post data (excluding secret): " . 
                 http_build_query([
                     'client_id' => $credentials['client_id'],
                     'scope' => 'https://graph.microsoft.com/.default',
                     'grant_type' => 'client_credentials'
                 ])
-            );
+            );*/
 
             curl_setopt($ch, CURLOPT_URL, $this->client_credentials_url);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -114,21 +114,21 @@ class TigerGradesAPI {
             $response = curl_exec($ch);
             
             if ($response === false) {
-                error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
+                # error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
                 rewind($verbose);
                 $verboseLog = stream_get_contents($verbose);
-                error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
+                # error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
                 curl_close($ch);
                 return false;
             }
 
             $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             if ($http_code !== 200) {
-                error_log("TigerGrades API Error: Token endpoint returned status code: $http_code");
-                error_log("TigerGrades API Debug: Raw response: " . print_r($response, true));
+                # error_log("TigerGrades API Error: Token endpoint returned status code: $http_code");
+                # error_log("TigerGrades API Debug: Raw response: " . print_r($response, true));
                 rewind($verbose);
                 $verboseLog = stream_get_contents($verbose);
-                error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
+                # error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
                 curl_close($ch);
                 return false;
             }
@@ -139,7 +139,7 @@ class TigerGradesAPI {
             
             // Check if we got a valid token response
             if (!isset($data->access_token) || !isset($data->expires_in)) {
-                error_log("TigerGrades API Error: Invalid token response - " . json_encode($data));
+                # error_log("TigerGrades API Error: Invalid token response - " . json_encode($data));
                 return false;
             }
 
@@ -150,7 +150,7 @@ class TigerGradesAPI {
 
             return true;
         } catch (Exception $e) {
-            error_log("TigerGrades API Error: " . $e->getMessage());
+            # error_log("TigerGrades API Error: " . $e->getMessage());
             $this->api_errors[] = $e->getMessage();
             return false;
         }
@@ -228,6 +228,7 @@ class TigerGradesAPI {
         }
 
         $this->gradebook_item_id = getenv('S' . $semester . '_GRADEBOOK_ITEM_ID');
+        # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
         $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
         $access_token = $this->jwt_token_manager->get_token();
@@ -247,13 +248,13 @@ class TigerGradesAPI {
         
         // Add error handling for curl execution
         if ($response === false) {
-            error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
+            # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
             return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
         }
 
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($http_code !== 200) {
-            error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
+            # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
             return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
         }
 
@@ -263,34 +264,35 @@ class TigerGradesAPI {
         
         // Check for JSON decode errors
         if ($data === null) {
-            error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
+            # error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
             return new WP_Error('json_error', 'Failed to parse API response');
         }
 
         // Validate expected data structure
         if (!isset($data->text) || !is_array($data->text)) {
-            error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
+            # error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
             return new WP_Error('data_error', 'Invalid data structure in API response');
         }
 
         $student_id = get_user_meta($user_id, 'tigr_std_id', true);
         if (empty($student_id)) {
-            error_log("TigerGrades API Error: No student ID found for user $user_id");
+            # error_log("TigerGrades API Error: No student ID found for user $user_id");
             return new WP_Error('user_error', 'Student ID not found');
         }
 
         $dates = $data->text[0];
-        $types = $data->text[1];
+        $types = array_map('strtolower', $data->text[1]);
+        $type_labels = $data->text[1];
         $totals = $data->text[2];
         $names = $data->text[3];
 
         // Validate required data arrays
         if (empty($dates) || empty($types) || empty($totals) || empty($names)) {
-            error_log("TigerGrades API Error: Missing required data arrays - " . 
-                     "Dates: " . json_encode($dates) . 
-                     ", Types: " . json_encode($types) . 
-                     ", Totals: " . json_encode($totals) . 
-                     ", Names: " . json_encode($names));
+            # error_log("TigerGrades API Error: Missing required data arrays - " . 
+            #          "Dates: " . json_encode($dates) . 
+            #          ", Types: " . json_encode($types) . 
+            #          ", Totals: " . json_encode($totals) . 
+            #          ", Names: " . json_encode($names));
             return new WP_Error('data_error', 'Missing required grade data');
         }
 
@@ -308,7 +310,7 @@ class TigerGradesAPI {
         }
 
         if (!$student_data) {
-            error_log("TigerGrades API Error: No data found for student ID $student_id");
+            # error_log("TigerGrades API Error: No data found for student ID $student_id");
             return new WP_Error('data_error', 'Student data not found');
         }
 
@@ -330,6 +332,7 @@ class TigerGradesAPI {
             $grade = new stdClass();
             $grade->date = $dates[$i];
             $grade->type = $types[$i];
+            $grade->type_label = $type_labels[$i];
             $grade->total = $totals[$i];
             $grade->name = $names[$i];
             $grade->score = $student_data[$i];

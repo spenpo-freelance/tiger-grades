@@ -73,7 +73,7 @@ jQuery(document).ready(function($) {
             if (type === 'all') {
                 row.append(
                     $('<td>').addClass('grade-type').append(
-                        $('<a>').attr('href', grade.type).text(grade.type)
+                        $('<a>').attr('href', grade.type).text(grade.type_label)
                     ),
                     $('<td>').addClass('grade-percentage').text(percentageText),
                     $('<td>').addClass('grade-letter').text(getLetterGrade(percentage))

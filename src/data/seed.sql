@@ -128,7 +128,7 @@ SELECT LAST_INSERT_ID() INTO @s_classwork_page_id;
 UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @classwork_page_id) WHERE ID = @classwork_page_id;
 
 INSERT INTO `wp_posts` (`post_author`, `post_content`, `post_title`, `post_status`, `post_name`, `post_parent`, `guid`, `post_type`, `post_date`, `post_date_gmt`)
-VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="project" class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'Projects', 'publish', 'project', @science_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
+VALUES (1, '<!-- wp:shortcode -->\n[tigr_report_card type="stem" class_id="science" semester="2"]\n<!-- /wp:shortcode -->', 'STEM', 'publish', 'stem', @science_page_id, '', 'page', NOW(), UTC_TIMESTAMP());
 
 SELECT LAST_INSERT_ID() INTO @s_project_page_id;
 UPDATE `wp_posts` SET `guid` = CONCAT(@site_url, '/?page_id=', @project_page_id) WHERE ID = @project_page_id;
