@@ -36,3 +36,15 @@ jobs:
           remote_user: ${{ secrets.HOSTINGER_USERNAME }}
           remote_key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
           remote_port: ${{ secrets.HOSTINGER_PORT }}
+
+      - name: Clear Cache
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+          port: ${{ secrets.HOSTINGER_PORT }}
+          script: |
+            wp cache flush --path=${{ env.DEPLOY_PATH }}
+            wp transient delete --all --path=${{ env.DEPLOY_PATH }}
+            wp rewrite flush --hard --path=${{ env.DEPLOY_PATH }}
