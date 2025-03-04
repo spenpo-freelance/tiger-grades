@@ -39,6 +39,7 @@ register_deactivation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseM
 require_once TIGER_GRADES_PATH . 'includes/api/TigerGradesAPI.php';
 require_once TIGER_GRADES_PATH . 'includes/api/JwtTokenManager.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/ReportCard.php';
+require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 
 // Register styles
 function enqueue_tiger_grades_styles() {

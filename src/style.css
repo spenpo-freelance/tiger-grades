@@ -80,3 +80,7 @@
 .text-loading {
     opacity: 0.5;
 }
+
+.tiger-version {
+    text-align: center;
+}
