@@ -48,3 +48,8 @@ jobs:
             wp cache flush --path=${{ env.DEPLOY_PATH }}
             wp transient delete --all --path=${{ env.DEPLOY_PATH }}
             wp rewrite flush --hard --path=${{ env.DEPLOY_PATH }}
+            # Check if LiteSpeed Cache plugin is active before attempting to purge
+            if wp plugin is-active litespeed-cache --path=${{ env.DEPLOY_PATH }}; then
+              wp litespeed-purge all --path=${{ env.DEPLOY_PATH }}
+            fi
+
