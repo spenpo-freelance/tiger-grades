@@ -1,6 +1,8 @@
 <?php
 namespace Spenpo\TigerGrades\Shortcodes;
 
+use Spenpo\TigerGrades\Utilities\VersionManager;
+
 /**
  * Handles the [tigr_version] shortcode functionality.
  * 
@@ -23,8 +25,8 @@ class VersionShortcode {
      * @return string The rendered shortcode content
      */
     public function render($atts) {
-        // Get the database version from WordPress options
-        $db_version = get_option('tigr_db_version', 'Not available');
+        // Get the database version using the VersionManager
+        $db_version = VersionManager::getCurrentVersion();
         
         // Return the formatted version
         return '<div class="tiger-version">APP Version: ' . esc_html($db_version) . '</div>';

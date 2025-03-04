@@ -26,20 +26,21 @@ if (!defined('TIGER_GRADES_URL')) {
     define('TIGER_GRADES_URL', plugin_dir_url(__FILE__));
 }
 
-// Include the DatabaseManager class
+// Load the VersionManager first to ensure version checking happens early
+require_once TIGER_GRADES_PATH . 'includes/utilities/VersionManager.php';
+
+// Then load other dependencies
 require_once TIGER_GRADES_PATH . 'includes/repositories/DatabaseManager.php';
+require_once TIGER_GRADES_PATH . 'includes/api/TigerGradesAPI.php';
+require_once TIGER_GRADES_PATH . 'includes/api/JwtTokenManager.php';
+require_once TIGER_GRADES_PATH . 'includes/shortcodes/ReportCard.php';
+require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 
 // Register activation hook with full namespace
 register_activation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseManager', 'createDatabase']);
 
 // Register deactivation hook with full namespace
 register_deactivation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseManager', 'teardownDatabase']);
-
-// Load dependencies
-require_once TIGER_GRADES_PATH . 'includes/api/TigerGradesAPI.php';
-require_once TIGER_GRADES_PATH . 'includes/api/JwtTokenManager.php';
-require_once TIGER_GRADES_PATH . 'includes/shortcodes/ReportCard.php';
-require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 
 // Register styles
 function enqueue_tiger_grades_styles() {

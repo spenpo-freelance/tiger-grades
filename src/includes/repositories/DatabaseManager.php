@@ -7,6 +7,8 @@
  */
 namespace Spenpo\TigerGrades\Repositories;
 
+use Spenpo\TigerGrades\Utilities\VersionManager;
+
 class DatabaseManager {
     protected static function requireUpgradeFile() {
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -142,21 +144,15 @@ class DatabaseManager {
      * @return void
      */
     public static function createDatabase() {
-        $current_version = get_option('tigr_db_version', '0');
-        $plugin_version = '0.0.3';
-        
         // Always recreate database in debug/development environment
-        if (defined('WP_DEBUG') && WP_DEBUG || version_compare($current_version, $plugin_version, '<')) {
-            // Original relative path
-            // $script_path = plugin_dir_path(dirname(__FILE__)) . '../data/seed.sql';
-            
+        if (defined('WP_DEBUG') && WP_DEBUG || VersionManager::needsUpdate()) {
             // New absolute path using plugin root directory
             $script_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'data/seed.sql';
             
             $result = self::executeScript($script_path, 'init');
             
             if ($result['success']) {
-                update_option('tigr_db_version', $plugin_version);
+                VersionManager::syncWithPluginVersion();
             }
         }
     }
