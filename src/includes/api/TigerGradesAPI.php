@@ -26,6 +26,7 @@ class TigerGradesAPI {
     private $msft_client_secret;
     private $client_credentials_url;
     private $api_errors;
+    private $classTypeSheetSuffixes;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -34,6 +35,11 @@ class TigerGradesAPI {
     private function __construct() {
         $this->register_routes();
         $this->api_errors = array();
+        $this->classTypeSheetSuffixes = [
+            'english' => 'e',
+            'science' => 'ss',
+            'social_studies' => 'ss',
+        ];
     }
 
     /**
@@ -192,7 +198,47 @@ class TigerGradesAPI {
                     ]
                 ]
             ]);
+            
+            register_rest_route('tiger-grades/v1', '/class-metadata', [
+                'methods' => 'GET',
+                'callback' => [$this, 'handle_class_metadata_request'],
+                'permission_callback' => function() {
+                    return is_user_logged_in();
+                },
+                'args' => [
+                    'type' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'class_id' => [
+                        'required' => true,
+                        'default' => 'english',
+                        'type' => 'string'
+                    ],
+                    'semester' => [
+                        'required' => true,
+                        'default' => 1,
+                        'type' => 'integer'
+                    ]
+                ]
+            ]);
         });
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
+    public function handle_class_metadata_request($request) {
+        $type = $request->get_param('type');
+        $class_id = $request->get_param('class_id');
+        $semester = $request->get_param('semester');
+
+        $data = $this->fetchClassMetadata($type, $class_id, $semester);
+        
+        return new WP_REST_Response($data, 200);
     }
 
     /**
@@ -211,6 +257,71 @@ class TigerGradesAPI {
         $data = $this->fetchReportCard($user_id, $sort_by, $type, $class_id, $semester);
         
         return new WP_REST_Response($data, 200);
+    }
+
+    /**
+     * Fetches and formats all report card data from the repository.
+     * 
+     * @param string $type The type of grades to fetch
+     * @param string $class_id The ID of the class to fetch report card data for
+     * @param int $semester The semester to fetch report card data for
+     * @return array JSON object with the class metadata
+     */
+    public function fetchClassMetadata($type, $class_id = 'english', $semester = 1) {
+        if (!$this->getAccessToken($class_id)) {
+            return new WP_Error('api_error', 'Failed to acquire access token');
+        }
+
+        $this->gradebook_item_id = getenv('S' . $semester . '_GRADEBOOK_ITEM_ID');
+        # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
+
+        $access_token = $this->jwt_token_manager->get_token();
+
+        $url = "{$this->graph_api_url}/type_{$this->classTypeSheetSuffixes[$class_id]}/usedRange";
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer {$access_token}"
+        ]);
+
+        $response = curl_exec($ch);
+        
+        // Add error handling for curl execution
+        if ($response === false) {
+            # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
+            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
+        }
+
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($http_code !== 200) {
+            # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
+            return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
+        }
+
+        curl_close($ch);
+
+        $data = json_decode($response);
+        
+        // Check for JSON decode errors
+        if ($data === null) {
+            # error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
+            return new WP_Error('json_error', 'Failed to parse API response');
+        }
+
+        // Validate expected data structure
+        if (!isset($data->text) || !is_array($data->text)) {
+            # error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
+            return new WP_Error('data_error', 'Invalid data structure in API response');
+        }
+
+        $result = $this->findWeightByType($data->text, $type);
+
+        return $result;
     }
 
     /**
@@ -354,5 +465,28 @@ class TigerGradesAPI {
         });
 
         return $result;
+    }
+
+    // Helper function to find weight by type
+    private function findWeightByType($data, $type) {
+        if (!is_array($data) || count($data) < 2) {
+            return null;
+        }
+
+        $return = new stdClass();
+        $return->type = $type;
+        $return->type_label = null;
+        $return->weight = null;
+        
+        // Skip the header row (index 0)
+        for ($i = 1; $i < count($data); $i++) {
+            if (isset($data[$i][1]) && strtolower($data[$i][1]) === strtolower($type)) {
+                $return->type_label = $data[$i][1];
+                $return->weight = $data[$i][2];
+                break;
+            }
+        }
+        
+        return $return;
     }
 }

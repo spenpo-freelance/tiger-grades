@@ -9,7 +9,7 @@ jQuery(document).ready(function($) {
     const semester = String(container.data('semester')).split(', ');
 
     container.append($('<div>').addClass('student-name-container'));
-
+    container.append($('<div>').addClass('class-metadata-container'));
     // loop through semesters, create containers with loading divs, create tabs if more than one semester
     // on click, show the container and hide the others
     if (semester.length > 1) {
@@ -122,7 +122,7 @@ jQuery(document).ready(function($) {
             },
             data: {
                 user_id: userId,
-                type: type,
+                type,
                 class_id: classId,
                 semester: Number(sem)
             },
@@ -163,4 +163,35 @@ jQuery(document).ready(function($) {
             }
         });
     });
+
+    // if it is a specific grade type page, fetch the metadata
+    if (type !== 'all') {
+        const studentNameContainer = $('.class-metadata-container');
+        studentNameContainer.append($('<p>').addClass('metadata text-loading').append(
+            $('<strong>').addClass('metadata-type').text(type),
+            ` grades are worth `,
+            $('<strong>').addClass('metadata-weight').text('(...)'),
+            ` of the overall grade`
+        ));
+        $.ajax({
+            url: tigerGradesData.metadataUrl,
+            method: 'GET',
+            data: {
+                type,
+                class_id: classId,
+                semester: Number(semester[0])
+            },
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('X-WP-Nonce', tigerGradesData.nonce);
+            },
+            success: function(data) {
+                $('.metadata-weight').text(data.weight);
+                $('.metadata-type').text(data.type_label);
+                $('.text-loading').removeClass('text-loading');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error fetching metadata:', error);
+            }
+        });
+    }
 }); 

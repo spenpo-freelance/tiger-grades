@@ -76,3 +76,7 @@
 .tabs button:focus {
     outline: none;
 }
+
+.text-loading {
+    opacity: 0.5;
+}

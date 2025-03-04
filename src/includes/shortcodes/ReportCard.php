@@ -133,6 +133,7 @@ class ReportCardShortcode {
             // Localize the script with necessary data
             wp_localize_script('tiger-grades-report-card', 'tigerGradesData', array(
                 'apiUrl' => rest_url('tiger-grades/v1/report-card'),
+                'metadataUrl' => rest_url('tiger-grades/v1/class-metadata'),
                 'nonce' => wp_create_nonce('wp_rest')
             ));
 
