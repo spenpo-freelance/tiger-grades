@@ -1,3 +1,0 @@
-kind: Added
-body: temporary VersionManager class for incrementing version based on main file header. set to be replaced with devops processes
-time: 2025-03-04T09:34:29.873207+08:00
