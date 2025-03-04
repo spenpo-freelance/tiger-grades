@@ -10,12 +10,21 @@ use Spenpo\TigerGrades\Utilities\VersionManager;
  * @since 0.0.3
  */
 class VersionShortcode {
+    private $text_translations;
     /**
      * Constructor initializes and registers the shortcode.
      */
     public function __construct() {
         // Register the shortcode
         add_shortcode('tigr_version', [$this, 'render']);
+        $this->text_translations = [
+            'en' => [
+                'version' => 'Version',
+            ],
+            'zh' => [
+                'version' => '版本',
+            ],
+        ];
     }
 
     /**
@@ -27,9 +36,11 @@ class VersionShortcode {
     public function render($atts) {
         // Get the database version using the VersionManager
         $db_version = VersionManager::getCurrentVersion();
+
+        $lang = pll_current_language();
         
         // Return the formatted version
-        return '<div class="tiger-version">APP Version: ' . esc_html($db_version) . '</div>';
+        return '<div class="tiger-version">APP ' . $this->text_translations[$lang]['version'] . ': ' . esc_html($db_version) . '</div>';
     }
 }
 
