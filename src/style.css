@@ -84,3 +84,9 @@
 .tiger-version {
     text-align: center;
 }
+
+.report-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}

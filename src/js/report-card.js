@@ -130,6 +130,13 @@ jQuery(document).ready(function($) {
                 const reportCard = $(`.report-card-${sem}`);
                 reportCard.empty();
 
+                // Header flex container
+                const header = $('<div>').addClass('report-card-header');
+                reportCard.append(header);
+
+                // Info section
+                const studentInfo = $('<div>').addClass('average-container');
+
                 // Add student name
                 const studentName = $('.student-name-container');
                 if (studentName.children().length === 0) {
@@ -138,21 +145,31 @@ jQuery(document).ready(function($) {
                     );
                 }
 
-                // Add average section
-                const avgContainer = $('<div>').addClass('average-container');
+                const controls = $('<div>').addClass('report-card-controls');
+
+                // Add export button
+                const exportButton = $('<button>')
+                    .addClass('export-pdf-button btn btn-theme-primary btn-md')
+                    .text('Export as PDF')
+                    .on('click', function() {
+                        exportReportCardAsPDF(data, sem, type);
+                    });
                 
+                controls.append(exportButton);
+
                 if (type === 'all') {
-                    avgContainer.append(
+                    studentInfo.append(
                         $('<h4>').addClass('average').text(`Overall Grade: ${data.avg.final}`),
                         $('<h4>').addClass('average').text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`)
                     );
                 } else {
-                    avgContainer.append(
+                    studentInfo.append(
                         $('<h4>').addClass('average').text(`Semester Average: ${data.avg[type]}`)
                     );
                 }
                 
-                reportCard.append(avgContainer);
+                header.append(studentInfo);
+                header.append(controls);
 
                 // Add grades table
                 reportCard.append(createGradeTable(data.grades, type));
@@ -193,5 +210,105 @@ jQuery(document).ready(function($) {
                 console.error('Error fetching metadata:', error);
             }
         });
+    }
+
+    // Function to export report card as PDF
+    function exportReportCardAsPDF(data, semester, type) {
+        // Load jsPDF library dynamically
+        if (typeof jspdf === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = function() {
+                const tableScript = document.createElement('script');
+                tableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
+                tableScript.onload = function() {
+                    generatePDF(data, semester, type);
+                };
+                document.head.appendChild(tableScript);
+            };
+            document.head.appendChild(script);
+        } else {
+            generatePDF(data, semester, type);
+        }
+    }
+
+    function generatePDF(data, semester, type) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const classSentenceCase = classId.split(/[\s_]+/g).reduce((acc, word) => {
+            return acc + '_' + word.charAt(0).toUpperCase() + word.slice(1);
+        }, '');
+        
+        // Set title
+        const title = `${data.name}'s ${classSentenceCase.replace('_', ' ')} Report Card - Semester ${semester}`;
+        doc.setFontSize(16);
+        doc.text(title, 14, 20);
+        
+        // Add average information
+        doc.setFontSize(12);
+        let yPos = 30;
+        
+        if (type === 'all') {
+            doc.text(`Overall Grade: ${data.avg.final}`, 14, yPos);
+            yPos += 7;
+            doc.text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`, 14, yPos);
+        } else {
+            doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Average: ${data.avg[type]}`, 14, yPos);
+        }
+        
+        // Create table data
+        const tableColumn = type === 'all' 
+            ? ['Date', 'Assignment', 'Type', 'Percentage', 'Letter Grade']
+            : ['Date', 'Assignment', 'Possible Points', 'Points Earned', 'Percentage'];
+        
+        const tableRows = [];
+        
+        data.grades.forEach(grade => {
+            const percentage = getPercentage(grade.score, grade.total);
+            const percentageText = `${percentage}${typeof percentage === 'number' ? '%' : ''}`;
+            
+            if (type === 'all') {
+                tableRows.push([
+                    grade.date,
+                    grade.name,
+                    grade.type_label,
+                    percentageText,
+                    getLetterGrade(percentage)
+                ]);
+            } else {
+                tableRows.push([
+                    grade.date,
+                    grade.name,
+                    grade.total,
+                    processScore(grade.score),
+                    percentageText
+                ]);
+            }
+        });
+        
+        // Generate table
+        doc.autoTable({
+            head: [tableColumn],
+            body: tableRows,
+            startY: yPos + 10,
+            theme: 'grid',
+            styles: {
+                fontSize: 10,
+                cellPadding: 3
+            },
+            headStyles: {
+                fillColor: [66, 66, 66]
+            }
+        });
+        
+        // Generate timestamp
+        const now = new Date();
+        const timestamp = `Generated on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+        doc.setFontSize(10);
+        doc.text(timestamp, 14, doc.internal.pageSize.height - 10);
+        
+        // Save the PDF
+        doc.save(`${data.name.replace(/\s+/g, '_')}${classSentenceCase}_Report_Card_S${semester}.pdf`);
     }
 }); 
