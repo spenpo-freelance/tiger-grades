@@ -243,7 +243,16 @@ jQuery(document).ready(function($) {
         }, '');
         
         // Set title
-        const title = `${data.name}'s ${classSentenceCase.replace('_', ' ')} Report Card - Semester ${semester}`;
+        const title = data.name
+            + "'s"
+            + classSentenceCase.replaceAll('_', ' ')
+            + ' '
+            + (type === 'all'
+                ? 'Report Card'
+                : `${type.charAt(0).toUpperCase() + type.slice(1)} Grades`)
+            + ' - Semester '
+            + semester;
+
         doc.setFontSize(16);
         doc.text(title, 14, 20);
         
@@ -309,8 +318,16 @@ jQuery(document).ready(function($) {
         const timestamp = `Generated on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
         doc.setFontSize(10);
         doc.text(timestamp, 14, doc.internal.pageSize.height - 10);
+
+        const filename = data.name.replace(/\s+/g, '_')
+            + classSentenceCase
+            + (type === 'all'
+                ? '_Report_Card'
+                : '_' + type.charAt(0).toUpperCase() + type.slice(1) + '_Grades')
+            + '_S' + semester
+            + '.pdf';
         
         // Save the PDF
-        doc.save(`${data.name.replace(/\s+/g, '_')}${classSentenceCase}_Report_Card_S${semester}.pdf`);
+        doc.save(filename);
     }
 }); 
