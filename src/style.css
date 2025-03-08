@@ -2,9 +2,16 @@
     --wp--style--global--content-size: 800px; /* Adjust the value as needed */
 }
 
+.grade-table-container {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+}
+
 .grade-table {
     width: 100%;
     border-collapse: collapse;
+    min-width: 500px; /* Ensures minimum width for readability */
 }
 
 .grade-table-header-row {
@@ -17,6 +24,47 @@
 
 .grade-letter, .grade-percentage, .grade-total, .grade-score {
     text-align: center;
+}
+
+.grade-table th, .grade-table td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    word-wrap: break-word; /* Allow text to wrap */
+    overflow-wrap: break-word;
+}
+
+/* Optimize header display */
+.grade-table th {
+    padding: 8px 4px;
+    font-weight: bold;
+    white-space: normal; /* Allow wrapping if absolutely necessary */
+    line-height: 1.2;
+}
+
+/* Column width distribution */
+.grade-table .grade-date {
+    width: 15%;
+}
+
+.grade-table .grade-name {
+    width: 40%; /* Give more space to assignment names */
+}
+
+.grade-table .grade-type, 
+.grade-table .grade-total, 
+.grade-table .grade-score, 
+.grade-table .grade-percentage, 
+.grade-table .grade-letter {
+    width: 15%;
+    text-align: center;
+}
+
+/* Ensure text is readable on small screens */
+@media screen and (max-width: 480px) {
+    .grade-table th, .grade-table td {
+        padding: 6px 3px;
+        font-size: 13px;
+    }
 }
 
 .loading {
@@ -89,4 +137,8 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+}
+
+.export-pdf-button {
+    margin-bottom: 12px;
 }

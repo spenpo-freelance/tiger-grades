@@ -45,11 +45,11 @@ jQuery(document).ready(function($) {
         const table = $('<table>').addClass('grade-table');
         
         // Create header
-        const headers = ['Date', 'Assignment'];
+        const headers = ['Date', 'Task'];
         if (type === 'all') {
-            headers.push('Type', 'Percentage', 'Letter Grade');
+            headers.push('Type', 'Percent', 'Grade');
         } else {
-            headers.push('Possible Points', 'Points Earned', 'Percentage');
+            headers.push('Max', 'Earned', 'Percent');
         }
 
         const thead = $('<thead>').append(
@@ -172,7 +172,9 @@ jQuery(document).ready(function($) {
                 header.append(controls);
 
                 // Add grades table
-                reportCard.append(createGradeTable(data.grades, type));
+                const tableContainer = $('<div>').addClass('grade-table-container');
+                tableContainer.append(createGradeTable(data.grades, type));
+                reportCard.append(tableContainer);
             },
             error: function(xhr, status, error) {
                 reportCard.html('<div class="error-message">Error loading report card. Please try again later.</div>');
