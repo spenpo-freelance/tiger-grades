@@ -1,3 +1,0 @@
-kind: Fixed
-body: bug incorrectly using deploy_path as wordpress installation root. added installation_path env var to deploy workflow
-time: 2025-03-05T10:40:07.534015+08:00
