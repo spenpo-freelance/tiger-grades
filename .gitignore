@@ -1,1 +1,4 @@
 *.env
+bench
+/*.sql*
+setup-dev.sh

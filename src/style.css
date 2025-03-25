@@ -142,3 +142,110 @@
 .export-pdf-button {
     margin-bottom: 12px;
 }
+
+.approve-enrollment-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #f2f2f2;
+    color: #333;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.approve-enrollment-btn:hover {
+    background-color: #03c4eb;
+    border-color: #03c4eb;
+    color: #fff;
+}
+
+.approve-enrollment-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
+}
+
+dialog {
+    padding: 2rem;
+    max-width: 500px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+dialog::backdrop {
+    background-color: rgba(0, 0, 0, 0.45);
+}
+
+.empty-state-message {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-style: italic;
+}
+
+.report-card-controls {
+    display: flex;
+    gap: 10px;
+}
+
+.registration-buttons {
+    display: flex;
+    gap: 0;
+    justify-content: center;
+}
+
+.registration-button {
+    width: 200px;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.registration-button:first-child {
+    border-radius: 25px 0 0 25px;
+}
+
+.registration-button:last-child {
+    border-radius: 0 25px 25px 0;
+}
+
+.registration-button:hover {
+    background-color: #03c4eb;
+    border-color: #03c4eb;
+    color: #fff;
+}
+
+.registration-button:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
+}
+
+.registration-button.active {
+    background-color: #03c4eb;
+    border-color: #03c4eb;
+    color: #fff;
+}
+
+.hide {
+    display: none;
+}
+
+.flexbox {
+    display: flex;
+    gap: 10px;
+}
+
+.column {
+    flex-direction: column;
+}
+
+.between {
+    justify-content: space-between;
+}
+
+.register-class-btn {
+    align-self: center;
+}

@@ -7,6 +7,7 @@ use stdClass;
 use DateTime;
 use Spenpo\TigerGrades\API\JwtTokenManager;
 use Exception;
+use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 /**
  * Handles all TigerGrades API functionality and route registration.
  * 
@@ -26,7 +27,7 @@ class TigerGradesAPI {
     private $msft_client_secret;
     private $client_credentials_url;
     private $api_errors;
-    private $classTypeSheetSuffixes;
+    private $classRepository;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -35,11 +36,7 @@ class TigerGradesAPI {
     private function __construct() {
         $this->register_routes();
         $this->api_errors = array();
-        $this->classTypeSheetSuffixes = [
-            'english' => 'e',
-            'science' => 'ss',
-            'social_studies' => 'ss',
-        ];
+        $this->classRepository = new TigerClassRepository();
     }
 
     /**
@@ -78,7 +75,7 @@ class TigerGradesAPI {
         ];
     }
 
-    private function getAccessToken($class_id) {
+    private function getAccessToken() {
         try {
             $credentials = $this->getCredentials();
             
@@ -187,14 +184,15 @@ class TigerGradesAPI {
                         'default' => 'all',
                         'type' => 'string'
                     ],
-                    'class_id' => [
+                    'enrollment_id' => [
                         'required' => false,
                         'default' => 'english',
                         'type' => 'string'
                     ],
-                    'semester' => [
-                        'required' => true,
-                        'type' => 'integer'
+                    'is_teacher' => [
+                        'required' => false,
+                        'default' => false,
+                        'type' => 'boolean'
                     ]
                 ]
             ]);
@@ -210,17 +208,27 @@ class TigerGradesAPI {
                         'required' => true,
                         'type' => 'string'
                     ],
-                    'class_id' => [
+                    'enrollment_id' => [
                         'required' => true,
                         'default' => 'english',
                         'type' => 'string'
                     ],
-                    'semester' => [
-                        'required' => true,
-                        'default' => 1,
-                        'type' => 'integer'
+                    'is_teacher' => [
+                        'required' => false,
+                        'default' => false,
+                        'type' => 'boolean'
                     ]
                 ]
+            ]);
+            
+            register_rest_route('tiger-grades/v1', '/students', [
+                'methods' => 'GET',
+                'callback' => [$this, 'handle_students_request'],
+                'permission_callback' => function() {
+                    $user = wp_get_current_user();
+                    $can_access = is_user_logged_in() && in_array('teacher', (array) $user->roles);
+                    return $can_access;
+                },
             ]);
         });
     }
@@ -231,12 +239,25 @@ class TigerGradesAPI {
      * @param \WP_REST_Request $request The request object
      * @return \WP_REST_Response The response object
      */
+    public function handle_students_request($request) {
+        $class_id = $request->get_param('class_id');
+        $data = $this->fetchStudents($class_id);
+        
+        return new WP_REST_Response($data, 200);
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
     public function handle_class_metadata_request($request) {
         $type = $request->get_param('type');
-        $class_id = $request->get_param('class_id');
-        $semester = $request->get_param('semester');
+        $enrollment_id = $request->get_param('enrollment_id');
+        $is_teacher = $request->get_param('is_teacher');
 
-        $data = $this->fetchClassMetadata($type, $class_id, $semester);
+        $data = $this->fetchClassMetadata($type, $enrollment_id, $is_teacher);
         
         return new WP_REST_Response($data, 200);
     }
@@ -251,10 +272,10 @@ class TigerGradesAPI {
         $user_id = get_current_user_id();
         $sort_by = $request->get_param('sort_by');
         $type = $request->get_param('type');
-        $class_id = $request->get_param('class_id');
-        $semester = $request->get_param('semester');
+        $enrollment_id = $request->get_param('enrollment_id');
+        $is_teacher = $request->get_param('is_teacher');
 
-        $data = $this->fetchReportCard($user_id, $sort_by, $type, $class_id, $semester);
+        $data = $this->fetchReportCard($user_id, $enrollment_id, $sort_by, $type, $is_teacher);
         
         return new WP_REST_Response($data, 200);
     }
@@ -264,21 +285,109 @@ class TigerGradesAPI {
      * 
      * @param string $type The type of grades to fetch
      * @param string $class_id The ID of the class to fetch report card data for
-     * @param int $semester The semester to fetch report card data for
      * @return array JSON object with the class metadata
      */
-    public function fetchClassMetadata($type, $class_id = 'english', $semester = 1) {
-        if (!$this->getAccessToken($class_id)) {
+    public function fetchStudents($class_id) {
+        if (!$this->getAccessToken()) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
 
-        $this->gradebook_item_id = getenv('S' . $semester . '_GRADEBOOK_ITEM_ID');
+        $gradebook_id = $this->classRepository->getGradebookId($class_id);
+        # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$gradebook_id}/workbook/worksheets";
+
+        $access_token = $this->jwt_token_manager->get_token();
+
+        $url = "{$this->graph_api_url}/english/usedRange";
+
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            "Authorization: Bearer {$access_token}"
+        ]);
+
+        $response = curl_exec($ch);
+        
+        // Add error handling for curl execution
+        if ($response === false) {
+            # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
+            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
+        }
+
+        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        if ($http_code !== 200) {
+            # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
+            return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
+        }
+
+        curl_close($ch);
+
+        $data = json_decode($response);
+        
+        // Check for JSON decode errors
+        if ($data === null) {
+            # error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
+            return new WP_Error('json_error', 'Failed to parse API response');
+        }
+
+        // Validate expected data structure
+        if (!isset($data->text) || !is_array($data->text)) {
+            # error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
+            return new WP_Error('data_error', 'Invalid data structure in API response');
+        }
+
+        $result = $data->text;
+        
+        // Initialize array to store student data
+        $students = [];
+        
+        // Skip the header rows (first 4 rows based on fetchReportCard structure)
+        for ($i = 4; $i < count($result); $i++) {
+            $row = $result[$i];
+            // Check if we have valid student data (ID in column 0 and name in column 1)
+            if (!empty($row[0]) && !empty($row[1])) {
+                $students[] = [
+                    'id' => $row[0],
+                    'name' => $row[1]
+                ];
+            }
+        }
+
+        return $students;
+    }
+
+    /**
+     * Fetches and formats all report card data from the repository.
+     * 
+     * @param string $type The type of grades to fetch
+     * @param string $enrollment_id The ID of the enrollment to fetch report card data for
+     * @param bool $is_teacher Whether the user is a teacher
+     * @return array JSON object with the class metadata
+     * //////////////////////////////////////////////
+     * //////// CAVEAT: when $is_teacher is true, $enrollment_id is actually the class_id
+     * //////////////////////////////////////////////
+     */
+    public function fetchClassMetadata($type, $enrollment_id, $is_teacher = false) {
+        if (!$this->getAccessToken()) {
+            return new WP_Error('api_error', 'Failed to acquire access token');
+        }
+
+        $class = null;
+        if ($is_teacher) {
+            $class = $this->classRepository->getClass($enrollment_id);
+        } else {
+            $class = $this->classRepository->getClassFromEnrollment($enrollment_id);
+        }
+        $this->gradebook_item_id = $class->gradebook_id;
         # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
         $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
         $access_token = $this->jwt_token_manager->get_token();
 
-        $url = "{$this->graph_api_url}/type_{$this->classTypeSheetSuffixes[$class_id]}/usedRange";
+        $url = "{$this->graph_api_url}/categories/usedRange";
 
         $ch = curl_init();
 
@@ -328,23 +437,33 @@ class TigerGradesAPI {
      * Fetches and formats all report card data from the repository.
      * 
      * @param int $user_id The ID of the user to fetch report card data for
+     * @param string $enrollment_id The ID of the enrollment to fetch report card data for
      * @param string $sort_by The field to sort the grades by
      * @param string $type The type of grades to fetch
-     * @param string $class_id The ID of the class to fetch report card data for
+     * @param bool $is_teacher Whether the user is a teacher
      * @return array Formatted report card sections
+     * //////////////////////////////////////////////
+     * //////// CAVEAT: when $is_teacher is true, $enrollment_id is actually the class_id
+     * //////////////////////////////////////////////
      */
-    public function fetchReportCard($user_id, $sort_by = 'date', $type = 'all', $class_id = 'english', $semester = 1) {
-        if (!$this->getAccessToken($class_id)) {
+    public function fetchReportCard($user_id, $enrollment_id, $sort_by = 'date', $type = 'all', $is_teacher = false) {
+        if (!$this->getAccessToken()) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
 
-        $this->gradebook_item_id = getenv('S' . $semester . '_GRADEBOOK_ITEM_ID');
-        # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
+        $class = null;
+        if ($is_teacher) {
+            $class = $this->classRepository->getClass($enrollment_id);
+        } else {
+            $class = $this->classRepository->getClassFromEnrollment($enrollment_id);
+        }
+        $this->gradebook_item_id = $class->gradebook_id;
+        error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
         $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
         $access_token = $this->jwt_token_manager->get_token();
 
-        $url = "{$this->graph_api_url}/{$class_id}/usedRange";
+        $url = "{$this->graph_api_url}/grades/usedRange";
 
         $ch = curl_init();
 
@@ -385,46 +504,93 @@ class TigerGradesAPI {
             return new WP_Error('data_error', 'Invalid data structure in API response');
         }
 
-        $student_id = get_user_meta($user_id, 'tigr_std_id', true);
-        if (empty($student_id)) {
-            # error_log("TigerGrades API Error: No student ID found for user $user_id");
-            return new WP_Error('user_error', 'Student ID not found');
+        if ($is_teacher) {
+            $dates = $data->text[0];
+            $types = array_map('strtolower', $data->text[1]);
+            $type_labels = $data->text[1];
+            $totals = $data->text[2];
+            $names = $data->text[3];
+
+            // Validate required data arrays
+            if (empty($dates) || empty($types) || empty($totals) || empty($names)) {
+                return new WP_Error('data_error', 'Missing required grade data');
+            }
+
+            $results = [];
+
+            // Start from row 4 (index after headers) and process each student
+            for ($row = 4; $row < count($data->text); $row++) {
+                $student_data = $data->text[$row];
+                if (empty($student_data[0])) continue;
+                
+                $result = $this->createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $type, $sort_by);
+                if ($result) {
+                    $results[] = $result;
+                }
+            }
+
+            $report_card_object = new stdClass();
+            $report_card_object->reports = $results;
+
+            return $this->appendClassMetadata($report_card_object, $class);
+        } else {
+            $student_id = $class->student_id;
+            if (empty($student_id)) {
+                return new WP_Error('user_error', 'Student ID not found');
+            }
+
+            $dates = $data->text[0];
+            $types = array_map('strtolower', $data->text[1]);
+            $type_labels = $data->text[1];
+            $totals = $data->text[2];
+            $names = $data->text[3];
+
+            // Validate required data arrays
+            if (empty($dates) || empty($types) || empty($totals) || empty($names)) {
+                return new WP_Error('data_error', 'Missing required grade data');
+            }
+
+            // Find student's data array
+            $student_data = null;
+            foreach ($data->text as $row) {
+                if (isset($row[0]) && $row[0] == (string)$student_id) {
+                    $student_data = $row;
+                    break;
+                }
+            }
+
+            if (!$student_data) {
+                return new WP_Error('data_error', 'Student data not found');
+            }
+
+            return $this->appendClassMetadata(
+                $this->createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $type, $sort_by),
+                $class
+            );
+        }
+    }
+
+    /**
+     * Creates a report card object for a single student
+     * 
+     * @param array $student_data The row of student data
+     * @param array $dates Array of dates
+     * @param array $types Array of grade types
+     * @param array $type_labels Array of grade type labels
+     * @param array $totals Array of total possible points
+     * @param array $names Array of assignment names
+     * @param string $type Type filter
+     * @param string $sort_by Sort field
+     * @return stdClass|null Report card object or null if invalid data
+     */
+    private function createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $type, $sort_by) {
+        if (empty($student_data[0]) || empty($student_data[1])) {
+            return null;
         }
 
-        $dates = $data->text[0];
-        $types = array_map('strtolower', $data->text[1]);
-        $type_labels = $data->text[1];
-        $totals = $data->text[2];
-        $names = $data->text[3];
-
-        // Validate required data arrays
-        if (empty($dates) || empty($types) || empty($totals) || empty($names)) {
-            # error_log("TigerGrades API Error: Missing required data arrays - " . 
-            #          "Dates: " . json_encode($dates) . 
-            #          ", Types: " . json_encode($types) . 
-            #          ", Totals: " . json_encode($totals) . 
-            #          ", Names: " . json_encode($names));
-            return new WP_Error('data_error', 'Missing required grade data');
-        }
-
-        // Initialize result object
         $result = new stdClass();
         $result->grades = [];
-
-        // Find student's data array
-        $student_data = null;
-        foreach ($data->text as $row) {
-            if (isset($row[0]) && $row[0] == (string)$student_id) {
-                $student_data = $row;
-                break;
-            }
-        }
-
-        if (!$student_data) {
-            # error_log("TigerGrades API Error: No data found for student ID $student_id");
-            return new WP_Error('data_error', 'Student data not found');
-        }
-
+        $result->student_id = $student_data[0];
         $result->name = $student_data[1];
         $result->avg = new stdClass();
         $result->avg->final = $student_data[2];
@@ -432,12 +598,10 @@ class TigerGradesAPI {
         $result->avg->{$names[4]} = $student_data[4];
         $result->avg->{$names[5]} = $student_data[5];
         $result->avg->{$names[6]} = $student_data[6];
-        
-        // Start from index 7 to skip header columns
-        for ($i = 7; $i < count($dates); $i++) {
-            // Skip if date is empty
-            if (empty($dates[$i])) continue;
 
+        // Process individual grades
+        for ($i = 7; $i < count($dates); $i++) {
+            if (empty($dates[$i])) continue;
             if ($type !== 'all' && $types[$i] !== $type) continue;
 
             $grade = new stdClass();
@@ -451,7 +615,7 @@ class TigerGradesAPI {
             $result->grades[] = $grade;
         }
 
-        // Sort the grades array based on the specified field
+        // Sort grades
         usort($result->grades, function($a, $b) use ($sort_by) {
             if ($sort_by === 'date') {
                 $date_a = DateTime::createFromFormat('n/j/Y', $a->date);
@@ -464,6 +628,12 @@ class TigerGradesAPI {
             return strcmp($a->$sort_by, $b->$sort_by);
         });
 
+        return $result;
+    }
+
+    private function appendClassMetadata($result, $class) {
+        $result->teacher = $class->teacher_name;
+        $result->class = $class->title;
         return $result;
     }
 

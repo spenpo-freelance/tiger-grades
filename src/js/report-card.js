@@ -5,46 +5,17 @@ jQuery(document).ready(function($) {
 
     const userId = container.data('user-id');
     const type = container.data('type');
-    const classId = container.data('class-id');
-    const semester = String(container.data('semester')).split(', ');
+    const enrollmentId = container.data('enrollment-id');
+    const isTeacher = !!container.data('is-teacher');
 
     container.append($('<div>').addClass('student-name-container'));
     container.append($('<div>').addClass('class-metadata-container'));
-    // loop through semesters, create containers with loading divs, create tabs if more than one semester
-    // on click, show the container and hide the others
-    if (semester.length > 1) {
-        const tabs = $('<div>').addClass('tabs');
-        semester.forEach((sem, idx, arr) => {
-            const tab = $('<button>').addClass(`tab tab-${sem} ${idx === 0 ? 'active' : ''}`).text(`Semester ${sem}`);
-            tab.on('click', () => {
-                $('.tab.active').removeClass('active');
-                $(`.tab-${sem}`).addClass('active');
-                arr.forEach((s, i) => {
-                    if (i === idx) {
-                        $(`.report-card-${s}`).show();
-                    } else {
-                        $(`.report-card-${s}`).hide();
-                    }
-                });
-            });
-            tabs.append(tab);
-        });
-        container.append(tabs);
-    }
+    const reportCard = $('<div>').addClass(`report-card`);
+    reportCard.append($('<div>').addClass('loading'));
+    container.append(reportCard);
 
-    semester.forEach((sem, idx) => {
-        const reportCard = $('<div>').addClass(`report-card-${sem}`);
-        if (idx > 0) {
-            reportCard.hide();
-        }
-        reportCard.append($('<div>').addClass('loading'));
-        container.append(reportCard);
-    });
-
-    function createGradeTable(grades, type) {
-        const table = $('<table>').addClass('grade-table');
-        
-        // Create header
+    // Separate table header creation for reusability
+    function createTableHeader(type) {
         const headers = ['Date', 'Task'];
         if (type === 'all') {
             headers.push('Type', 'Percent', 'Grade');
@@ -52,14 +23,39 @@ jQuery(document).ready(function($) {
             headers.push('Max', 'Earned', 'Percent');
         }
 
-        const thead = $('<thead>').append(
+        return $('<thead>').append(
             $('<tr>').append(
                 headers.map(text => 
                     $('<th>').addClass('grade-table-header-cell').text(text)
                 )
             )
         );
+    }
 
+    function createEmptyTableBody() {
+        return $('<tbody>').append(
+            $('<tr>').append(
+                $('<td>')
+                    .attr('colspan', '5')
+                    .addClass('empty-state-message')
+                    .text('No grades found')
+            )
+        );
+    }
+
+    function createGradeTable(type, isEmpty = false) {
+        const table = $('<table>').addClass('grade-table');
+        table.append(createTableHeader(type));
+        
+        if (isEmpty) {
+            table.append(createEmptyTableBody());
+        }
+        
+        return table;
+    }
+
+    function fillGradeTable(table, grades, type) {
+        table.find('tbody').remove();
         // Create rows
         const tbody = $('<tbody>');
         grades.forEach(grade => {
@@ -89,7 +85,80 @@ jQuery(document).ready(function($) {
             tbody.append(row);
         });
 
-        return table.append(thead, tbody);
+        return table.append(tbody);
+    }
+
+    // 1. UI Controls Component
+    function createReportControls(data, type, isFirstRender = false) {
+        const controls = $('<div>').addClass('report-card-controls');
+        // Export all students report card
+        if (isTeacher && type === 'all') {
+            const exportAllButton = $('<button>')
+                .addClass('export-pdf-button btn btn-theme-primary btn-md')
+                .text('Export All')
+                .on('click', () => exportReportCardAsPDF(data, type, true));
+            controls.append(exportAllButton);
+        }
+
+        if (isFirstRender) return controls;
+
+        // Export single student report card
+        const exportButton = $('<button>')
+            .addClass('export-pdf-button btn btn-theme-primary btn-md')
+            .text('Export as PDF')
+            .on('click', () => exportReportCardAsPDF(data, type));
+        
+        controls.append(exportButton);
+
+        return controls;
+    }
+
+    // 2. Grade Summary Component
+    function createGradeSummary(data, type, isFirstRender = false) {
+        const studentInfo = $('<div>').addClass('average-container');
+
+        if (isFirstRender) {
+            studentInfo.append($('<h4>').addClass('average').text('Please select a student to view their grades'));
+            return studentInfo;
+        }
+        
+        if (type === 'all') {
+            studentInfo.append(
+                $('<h4>').addClass('average').text(`Overall Grade: ${data.avg.final}`),
+                $('<h4>').addClass('average').text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`)
+            );
+        } else {
+            studentInfo.append(
+                $('<h4>').addClass('average').text(`Semester Average: ${data.avg[type]}`)
+            );
+        }
+        
+        return studentInfo;
+    }
+
+    // 3. Main Report Card Renderer
+    function renderReportCard(data, table, header, isFirstRender = false) {
+        // Create components
+        const studentInfo = createGradeSummary(data, type, isFirstRender);
+        const controls = createReportControls(data, type, isFirstRender);
+        
+        // Assemble header
+        header.empty()
+            .append(studentInfo)
+            .append(controls);
+
+        // Create and append grade table
+        const tableContainer = $('<div>').addClass('grade-table-container');
+        
+        if (isFirstRender) {
+            // For teachers before student selection
+            table.find('tbody').replaceWith(createEmptyTableBody());
+            tableContainer.append(table);
+        } else {
+            tableContainer.append(fillGradeTable(table, data.grades, type));
+        }
+        
+        reportCard.append(tableContainer);
     }
 
     function getPercentage (score, total) {
@@ -113,74 +182,55 @@ jQuery(document).ready(function($) {
         return score;
     }
 
-    semester.forEach((sem) => {
-        $.ajax({
-            url: tigerGradesData.apiUrl,
-            method: 'GET',
-            beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-WP-Nonce', tigerGradesData.nonce);
-            },
-            data: {
-                user_id: userId,
-                type,
-                class_id: classId,
-                semester: Number(sem)
-            },
-            success: function(data) {
-                const reportCard = $(`.report-card-${sem}`);
-                reportCard.empty();
+    $.ajax({
+        url: tigerGradesData.apiUrl,
+        method: 'GET',
+        beforeSend: function(xhr) {
+            xhr.setRequestHeader('X-WP-Nonce', tigerGradesData.nonce);
+        },
+        data: {
+            user_id: userId,
+            type,
+            enrollment_id: enrollmentId,
+            is_teacher: isTeacher,
+        },
+        success: function(data) {
+            reportCard.empty();
 
-                // Header flex container
-                const header = $('<div>').addClass('report-card-header');
-                reportCard.append(header);
+            // Header flex container
+            const header = $('<div>').addClass('report-card-header');
+            reportCard.append(header);
 
-                // Info section
-                const studentInfo = $('<div>').addClass('average-container');
+            // Create initial table - empty for teachers, populated for students
+            const gradeTable = createGradeTable(type, isTeacher);
 
-                // Add student name
-                const studentName = $('.student-name-container');
-                if (studentName.children().length === 0) {
+            // Add student name
+            const studentName = $('.student-name-container');
+            if (studentName.children().length === 0) {
+                if (isTeacher) {    
+                    studentName.append(
+                        $('<select>').addClass('student-name-select').append(
+                            $('<option>').text('Select Student').attr('value', '').attr('disabled', 'disabled').attr('selected', 'selected'),
+                            data.reports.map(({ name, student_id }) => $('<option>').text(name).attr('value', student_id))
+                        ).on('change', function() {
+                            const selectedStudentId = $(this).val();
+                            const studentData = data.reports.find(({ student_id }) => student_id === selectedStudentId);
+                            renderReportCard({ ...data, ...studentData }, gradeTable, header);
+                        })
+                    );
+                    // Initial render with empty state for teachers
+                    renderReportCard(data, gradeTable, header, true);
+                } else {
                     studentName.append(
                         $('<div>').addClass('student-name').text(data.name)
                     );
+                    renderReportCard(data, gradeTable, header);
                 }
-
-                const controls = $('<div>').addClass('report-card-controls');
-
-                // Add export button
-                const exportButton = $('<button>')
-                    .addClass('export-pdf-button btn btn-theme-primary btn-md')
-                    .text('Export as PDF')
-                    .on('click', function() {
-                        exportReportCardAsPDF(data, sem, type);
-                    });
-                
-                controls.append(exportButton);
-
-                if (type === 'all') {
-                    studentInfo.append(
-                        $('<h4>').addClass('average').text(`Overall Grade: ${data.avg.final}`),
-                        $('<h4>').addClass('average').text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`)
-                    );
-                } else {
-                    studentInfo.append(
-                        $('<h4>').addClass('average').text(`Semester Average: ${data.avg[type]}`)
-                    );
-                }
-                
-                header.append(studentInfo);
-                header.append(controls);
-
-                // Add grades table
-                const tableContainer = $('<div>').addClass('grade-table-container');
-                tableContainer.append(createGradeTable(data.grades, type));
-                reportCard.append(tableContainer);
-            },
-            error: function(xhr, status, error) {
-                reportCard.html('<div class="error-message">Error loading report card. Please try again later.</div>');
-                console.error('Error fetching report card:', error);
             }
-        });
+        },
+        error: function(xhr, status, error) {
+            reportCard.html('<div class="error-message">Error loading report card. Please try again later.</div>');
+        }
     });
 
     // if it is a specific grade type page, fetch the metadata
@@ -197,8 +247,8 @@ jQuery(document).ready(function($) {
             method: 'GET',
             data: {
                 type,
-                class_id: classId,
-                semester: Number(semester[0])
+                enrollment_id: enrollmentId,
+                is_teacher: isTeacher,
             },
             beforeSend: function(xhr) {
                 xhr.setRequestHeader('X-WP-Nonce', tigerGradesData.nonce);
@@ -215,7 +265,7 @@ jQuery(document).ready(function($) {
     }
 
     // Function to export report card as PDF
-    function exportReportCardAsPDF(data, semester, type) {
+    function exportReportCardAsPDF(data, type, isAll = false) {
         // Load jsPDF library dynamically
         if (typeof jspdf === 'undefined') {
             const script = document.createElement('script');
@@ -224,80 +274,112 @@ jQuery(document).ready(function($) {
                 const tableScript = document.createElement('script');
                 tableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
                 tableScript.onload = function() {
-                    generatePDF(data, semester, type);
+                    isAll ? generateAllStudentsPDF(data) : generatePDF(data, type);
                 };
                 document.head.appendChild(tableScript);
             };
             document.head.appendChild(script);
         } else {
-            generatePDF(data, semester, type);
+            isAll ? generateAllStudentsPDF(data) : generatePDF(data, type);
         }
     }
 
-    function generatePDF(data, semester, type) {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        
-        const classSentenceCase = classId.split(/[\s_]+/g).reduce((acc, word) => {
-            return acc + '_' + word.charAt(0).toUpperCase() + word.slice(1);
-        }, '');
+    function setupDocument(doc, yPos, data, type = null) {
+        // Generate title components
+        const studentName = data.name;
+        const className = data.class || 'Class'; // Fallback if class_name isn't available
         
         // Set title
-        const title = data.name
-            + "'s"
-            + classSentenceCase.replaceAll('_', ' ')
-            + ' '
-            + (type === 'all'
-                ? 'Report Card'
-                : `${type.charAt(0).toUpperCase() + type.slice(1)} Grades`)
-            + ' - Semester '
-            + semester;
+        let title = `${studentName}'s ${className}`;
+        
+        if (type) title += ` ${
+            type === 'all' ? 'Report Card' : `${type.charAt(0).toUpperCase() + type.slice(1)} Grades`
+        }`;
 
         doc.setFontSize(16);
         doc.text(title, 14, 20);
         
-        // Add average information
+        // Add metadata
         doc.setFontSize(12);
-        let yPos = 30;
-        
-        if (type === 'all') {
-            doc.text(`Overall Grade: ${data.avg.final}`, 14, yPos);
-            yPos += 7;
-            doc.text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`, 14, yPos);
-        } else {
-            doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Average: ${data.avg[type]}`, 14, yPos);
-        }
+        doc.text(`Teacher: ${data.teacher}`, 14, yPos);
         
         // Create table data
-        const tableColumn = type === 'all' 
-            ? ['Date', 'Assignment', 'Type', 'Percentage', 'Letter Grade']
-            : ['Date', 'Assignment', 'Possible Points', 'Points Earned', 'Percentage'];
+        let tableColumn;
+        switch (type) {
+            case 'all':
+                tableColumn = ['Date', 'Task', 'Type', 'Percent', 'Grade'];
+                break;
+            case null:
+                tableColumn = ['Date', 'Task', 'Type', 'Max', 'Earned', 'Percent', 'Grade'];
+                break;
+            default:
+                tableColumn = ['Date', 'Task', 'Max', 'Earned', 'Percent'];
+                break;
+        }
         
-        const tableRows = [];
-        
-        data.grades.forEach(grade => {
-            const percentage = getPercentage(grade.score, grade.total);
-            const percentageText = `${percentage}${typeof percentage === 'number' ? '%' : ''}`;
+        return { tableColumn };
+    }
+
+    function generateAllStudentsPDF(data) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        data.reports.forEach((report, index) => {
+            // Start a new page for each student (except the first one)
+            if (index > 0) {
+                doc.addPage();
+            }
+
+            // Reset yPos for each new student
+            let yPos = 30;
+
+            const { tableColumn } = setupDocument(doc, yPos, { ...data, ...report });
+            yPos += 7;
+
+            // Add grade information
+            doc.text(`Overall Grade: ${report.avg.final}`, 14, yPos);
+            yPos += 7;
+            doc.text(`Letter Grade: ${getLetterGrade(parseFloat(report.avg.final))}`, 14, yPos);
+            yPos += 7;
+            Object.entries(report.avg).forEach(([key, value]) => {
+                if (key === 'final') return;
+                doc.text(`${key.charAt(0).toUpperCase() + key.slice(1)} Average: ${value}`, 14, yPos);
+                yPos += 7;
+            });
             
-            if (type === 'all') {
+            const tableRows = [];
+            
+            // Ensure we're accessing the grades array correctly
+            const grades = Array.isArray(report.grades) ? report.grades : [];
+            
+            grades.forEach(grade => {
+                const percentage = getPercentage(grade.score, grade.total);
+                const percentageText = `${percentage}${typeof percentage === 'number' ? '%' : ''}`;
+                
                 tableRows.push([
                     grade.date,
                     grade.name,
-                    grade.type_label,
+                    grade.type_label || grade.type, // Fallback to type if type_label isn't available
+                    grade.total,
+                    processScore(grade.score),
                     percentageText,
                     getLetterGrade(percentage)
                 ]);
-            } else {
-                tableRows.push([
-                    grade.date,
-                    grade.name,
-                    grade.total,
-                    processScore(grade.score),
-                    percentageText
-                ]);
-            }
+            });
+
+            generateTable(doc, yPos, tableColumn, tableRows);
         });
+
+        addFooter(doc);
+
+        // Generate filename
+        const filename = `${data.class.replace(/\s+/g, '_')}_Reports.pdf`;
         
+        // Save the PDF
+        doc.save(filename);
+    }
+
+    function generateTable(doc, yPos, tableColumn, tableRows) {
         // Generate table
         doc.autoTable({
             head: [tableColumn],
@@ -312,20 +394,70 @@ jQuery(document).ready(function($) {
                 fillColor: [66, 66, 66]
             }
         });
-        
-        // Generate timestamp
+    }
+    
+    function addFooter(doc) {
+        // Add footer with timestamp
         const now = new Date();
         const timestamp = `Generated on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
         doc.setFontSize(10);
         doc.text(timestamp, 14, doc.internal.pageSize.height - 10);
+    }
 
-        const filename = data.name.replace(/\s+/g, '_')
-            + classSentenceCase
-            + (type === 'all'
-                ? '_Report_Card'
-                : '_' + type.charAt(0).toUpperCase() + type.slice(1) + '_Grades')
-            + '_S' + semester
-            + '.pdf';
+    function generatePDF(data, type) {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        let yPos = 30;
+        
+        const { tableColumn } = setupDocument(doc, yPos, data, type);
+        
+        // Add grade information
+        if (type === 'all') {
+            doc.text(`Overall Grade: ${data.avg.final}`, 14, yPos);
+            yPos += 7;
+            doc.text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`, 14, yPos);
+        } else {
+            doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Average: ${data.avg[type]}`, 14, yPos);
+        }
+        yPos += 7;
+        
+        const tableRows = [];
+        
+        // Ensure we're accessing the grades array correctly
+        const grades = Array.isArray(data.grades) ? data.grades : [];
+        
+        grades.forEach(grade => {
+            const percentage = getPercentage(grade.score, grade.total);
+            const percentageText = `${percentage}${typeof percentage === 'number' ? '%' : ''}`;
+            
+            if (type === 'all') {
+                tableRows.push([
+                    grade.date,
+                    grade.name,
+                    grade.type_label || grade.type, // Fallback to type if type_label isn't available
+                    percentageText,
+                    getLetterGrade(percentage)
+                ]);
+            } else {
+                tableRows.push([
+                    grade.date,
+                    grade.name,
+                    grade.total,
+                    processScore(grade.score),
+                    percentageText
+                ]);
+            }
+        });
+
+        generateTable(doc, yPos, tableColumn, tableRows);
+        addFooter(doc);
+
+        // Generate filename
+        const sanitizedStudentName = studentName.replace(/\s+/g, '_');
+        const sanitizedClassName = className.replace(/\s+/g, '_');
+        const filename = `${sanitizedStudentName}_${sanitizedClassName}_${
+            type === 'all' ? 'Report_Card' : `${type.charAt(0).toUpperCase() + type.slice(1)}_Grades`
+        }.pdf`;
         
         // Save the PDF
         doc.save(filename);

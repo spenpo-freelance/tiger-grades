@@ -6,6 +6,7 @@ use DOMDocument;
 use DOMElement;
 use WP_Error;
 use WP_REST_Response;
+use Spenpo\TigerGrades\Utilities\DOMHelper;
 
 /**
  * Handles the [tigr_report_card] shortcode functionality.
@@ -25,48 +26,9 @@ class ReportCardShortcode {
         $this->api = $this->getAPI();
         
         // Define default attributes for the shortcode
-        add_shortcode('tigr_report_card', function($atts) {
-            // Merge user attributes with defaults
-            $attributes = shortcode_atts([
-                'type' => 'all', // default value
-                'class_id' => 'english',
-                'semester' => '1',
-            ], $atts);
-            
-            return $this->render($attributes);
+        add_shortcode('tigr_parent_class', function($atts) {
+            return $this->render($atts);
         });
-    }
-
-    /**
-     * Creates a new DOM element with specified attributes.
-     * 
-     * @param DOMDocument $dom       The DOM document instance
-     * @param string      $tag       HTML tag name
-     * @param string      $class     CSS class name
-     * @param string|null $id        Optional element ID
-     * @param string|null $text      Optional text content
-     * @param array       $attributes Optional additional attributes
-     * 
-     * @return DOMElement The created element
-     */
-    private function createElement(DOMDocument $dom, $tag, $class, $id = null, $text = null, $attributes = []) {
-        $element = $dom->createElement($tag);
-        $element->setAttribute('class', $class);
-        
-        if ($id) {
-            $element->setAttribute('id', $class."-$id");
-        }
-
-        foreach ($attributes as $key => $value) {
-            $element->setAttribute($key, $value);
-        }
-        
-        if ($text) {
-            $element_text = $dom->createTextNode($text);
-            $element->appendChild($element_text);
-        }
-
-        return $element;
     }
 
     /**
@@ -103,22 +65,26 @@ class ReportCardShortcode {
      * @param array $atts Shortcode attributes
      * @return string HTML output of the report card
      */
-    public function render($atts) {
-        $user_id = get_current_user_id();
+    public function render() {
+        $user = wp_get_current_user();
+        $user_id = $user->ID;
+        $enrollment_id = get_query_var('enrollment_id');
+        $class_category = get_query_var('class_category') == '' ? 'all' : get_query_var('class_category');
+        $is_teacher = in_array('teacher', (array) $user->roles);
 
         $dom = new DOMDocument('1.0', 'utf-8');
         // Create a root container for all sections
-        $root = $this->createElement($dom, 'div', 'report-card-container');
+        $root = DOMHelper::createElement($dom, 'div', 'report-card-container');
         // Add data attributes for JS to use
         $root->setAttribute('data-user-id', $user_id);
-        $root->setAttribute('data-type', $atts['type']);
-        $root->setAttribute('data-class-id', $atts['class_id']);
-        $root->setAttribute('data-semester', $atts['semester']);
+        $root->setAttribute('data-type', $class_category);
+        $root->setAttribute('data-enrollment-id', $enrollment_id);
+        $root->setAttribute('data-is-teacher', $is_teacher);
         $dom->appendChild($root);
 
         if ($user_id) {
-            $loading = $this->createElement($dom, 'div', 'loading-message');
-            $loading->appendChild($this->createElement($dom, 'p', 'loading-text', null, 'Loading content...'));
+            $loading = DOMHelper::createElement($dom, 'div', 'loading-message');
+            $loading->appendChild(DOMHelper::createElement($dom, 'p', 'loading-text', null, 'Loading content...'));
             $root->appendChild($loading);
 
             // Enqueue the JavaScript
@@ -210,10 +176,10 @@ class ReportCardShortcode {
             
             // return $html;
         } else {
-            $not_logged_in_message = $this->createElement($dom, 'div', 'not-logged-in-message');
-            $not_logged_in_message->appendChild($this->createElement($dom, 'span', 'not-logged-in-message-text', null, 'Please '));
-            $not_logged_in_message->appendChild($this->createElement($dom, 'a', 'not-logged-in-message-text', null, 'log in', ['href' => '/my-account']));
-            $not_logged_in_message->appendChild($this->createElement($dom, 'span', 'not-logged-in-message-text', null, ' to view your child\'s grades.'));
+            $not_logged_in_message = DOMHelper::createElement($dom, 'div', 'not-logged-in-message');
+            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, 'Please '));
+            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'a', 'not-logged-in-message-text', null, 'log in', ['href' => '/my-account']));
+            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, ' to view your child\'s grades.'));
             $root->appendChild($not_logged_in_message);
             return $dom->saveHTML();
         }
