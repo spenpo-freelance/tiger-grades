@@ -268,18 +268,87 @@ class TigerClassRepository {
      * @return array Array of text section objects
      * @throws Exception When database error occurs
      */
-    public function createClass($title, $teacher_id, $enrollment_code) {
+    public function updateClass($class_id, $gradebook_id, $folder_id) {
         try {
             $query = $this->wpdb->prepare("
-                INSERT INTO {$this->wpdb->prefix}tigr_classes (title, teacher, enrollment_code)
-                VALUES (%s, %d, %s)
-            ", $title, $teacher_id, $enrollment_code);
+                UPDATE {$this->wpdb->prefix}tigr_classes
+                SET gradebook_id = %s
+                WHERE id = %d
+            ", $gradebook_id, $class_id);
             
             $this->wpdb->query($query);
             
             if ($this->wpdb->last_error) {
                 throw new Exception($this->wpdb->last_error);
             }
+
+            $class = $this->getClass($class_id);
+
+            if ($folder_id) {
+                update_user_meta($class->teacher, 'teachers_folder_id', $folder_id);
+            }
+
+            return $class;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Retrieves all text sections from the database.
+     * 
+     * @return array Array of text section objects
+     * @throws Exception When database error occurs
+     */
+    private function produce_unique_gradebook_name($title, $teacher_id) {
+        try {
+            $query = $this->wpdb->prepare("
+                SELECT gradebook_file_name FROM {$this->wpdb->prefix}tigr_classes WHERE teacher = %s
+            ", $teacher_id);
+            
+            $current_gradebooks = $this->wpdb->get_results($query);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+
+            $gradebook_name = str_replace(' ', '_', $title) . '_Gradebook.xlsx';
+            $i = 1;
+            while (in_array($gradebook_name, $current_gradebooks)) {
+                $gradebook_name = str_replace('.xlsx', '_' . $i . '.xlsx', $gradebook_name);
+                $i++;
+            }
+
+            return $gradebook_name;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Retrieves all text sections from the database.
+     * 
+     * @return array Array of text section objects
+     * @throws Exception When database error occurs
+     */
+    public function createClass($title, $teacher_id, $enrollment_code) {
+        try {
+            $gradebook_name = $this->produce_unique_gradebook_name($title, $teacher_id);
+            $query = $this->wpdb->prepare("
+                INSERT INTO {$this->wpdb->prefix}tigr_classes (title, teacher, enrollment_code, gradebook_file_name)
+                VALUES (%s, %d, %s, %s)
+            ", $title, $teacher_id, $enrollment_code, $gradebook_name);
+            
+            $this->wpdb->query($query);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+
+            $class_id = $this->wpdb->insert_id;
+            $new_class = $this->getClass($class_id);
+
+            return $new_class;
         } catch (Exception $e) {
             throw $e;
         }

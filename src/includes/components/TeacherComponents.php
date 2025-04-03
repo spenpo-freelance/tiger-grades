@@ -65,41 +65,47 @@ class TeacherComponents {
         $headerRow->appendChild($actionsHeader);
         $table->appendChild($headerRow);
 
-        foreach ($classes as $class) {
-            $enrollments = $class->total_enrollments;
-            if ($class->pending_enrollments > 0) {
-                $enrollments .= ' (' . $class->pending_enrollments . ' pending)';
-            }
-            
+        if (empty($classes)) {
             $row = DOMHelper::createElement($dom, 'tr', 'classes-table-row');
             $table->appendChild($row);
-
-            $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell');
-            $titleCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-title-cell-text', null, $class->title));
+            $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell empty-state-message', null, 'No classes found.', ['colspan' => '5']);
             $row->appendChild($titleCell);
+        } else {
+            foreach ($classes as $class) {
+                $enrollments = $class->total_enrollments;
+                if ($class->pending_enrollments > 0) {
+                    $enrollments .= ' (' . $class->pending_enrollments . ' pending)';
+                }
+                
+                $row = DOMHelper::createElement($dom, 'tr', 'classes-table-row');
+                $table->appendChild($row);
 
-            $statusCell = DOMHelper::createElement($dom, 'td', 'classes-table-status-cell');
-            $statusCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-status-cell-text', null, $class->status));
-            $row->appendChild($statusCell);
+                $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell');
+                $titleCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-title-cell-text', null, $class->title));
+                $row->appendChild($titleCell);
 
-            $enrollmentsCell = DOMHelper::createElement($dom, 'td', 'classes-table-enrollments-cell');
-            $enrollmentsCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-enrollments-cell-text', null, $enrollments));
-            $row->appendChild($enrollmentsCell);
+                $statusCell = DOMHelper::createElement($dom, 'td', 'classes-table-status-cell');
+                $statusCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-status-cell-text', null, $class->status));
+                $row->appendChild($statusCell);
 
-            $enrollmentCodeCell = DOMHelper::createElement($dom, 'td', 'classes-table-enrollment-code-cell');
-            $enrollmentCodeCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-enrollment-code-cell-text', null, $class->enrollment_code));
-            $row->appendChild($enrollmentCodeCell);
+                $enrollmentsCell = DOMHelper::createElement($dom, 'td', 'classes-table-enrollments-cell');
+                $enrollmentsCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-enrollments-cell-text', null, $enrollments));
+                $row->appendChild($enrollmentsCell);
 
-            $actionsCell = DOMHelper::createElement($dom, 'td', 'classes-table-actions-cell');
-            $actions_container = DOMHelper::createElement($dom, 'div', 'flexbox');
-            $actionsCell->appendChild($actions_container);
-            $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
-            $actions_container->appendChild($manageEnrollmentsButton);
-            $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
-            $actions_container->appendChild($gradesButton);
-            $row->appendChild($actionsCell);
+                $enrollmentCodeCell = DOMHelper::createElement($dom, 'td', 'classes-table-enrollment-code-cell');
+                $enrollmentCodeCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-enrollment-code-cell-text', null, $class->enrollment_code));
+                $row->appendChild($enrollmentCodeCell);
+
+                $actionsCell = DOMHelper::createElement($dom, 'td', 'classes-table-actions-cell');
+                $actions_container = DOMHelper::createElement($dom, 'div', 'flexbox');
+                $actionsCell->appendChild($actions_container);
+                $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
+                $actions_container->appendChild($manageEnrollmentsButton);
+                $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
+                $actions_container->appendChild($gradesButton);
+                $row->appendChild($actionsCell);
+            }
         }
-        
         return $root;
     }
 }

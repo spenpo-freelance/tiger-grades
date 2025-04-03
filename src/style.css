@@ -178,7 +178,7 @@ dialog::backdrop {
 
 .empty-state-message {
     text-align: center;
-    padding: 2rem;
+    padding: 8px;
     color: #666;
     font-style: italic;
 }

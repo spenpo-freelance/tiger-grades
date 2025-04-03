@@ -47,6 +47,18 @@ class TeachersAPI {
      * @return void
      */
     public function register_routes() {
+        ///////////////////////////////////
+        //////// FOR TESTING ONLY ////////
+        ////////////////////////////////
+        remove_filter('rest_authentication_errors', 'rest_authentication_errors');
+        add_filter('rest_authentication_errors', function($result) {
+            if (true === $result || is_wp_error($result)) {
+                return $result;
+            }
+            
+            return true;
+        });
+
         add_action('rest_api_init', function() {
             register_rest_route('tiger-grades/v1', '/create-class', [
                 'methods' => 'POST',
@@ -105,7 +117,51 @@ class TeachersAPI {
                     ]
                 ]
             ]);
+            register_rest_route('tiger-grades/v1', '/update-class', [
+                'methods' => 'POST',
+                'callback' => [$this, 'handle_update_class_request'],
+                'permission_callback' => function() {
+                    return true;
+                },
+                'args' => [
+                    'gradebook_id' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'class_id' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'folder_id' => [
+                        'required' => false,
+                        'type' => 'string',
+                        'sanitize_callback' => function($value) {
+                            return $value === null ? null : sanitize_text_field($value);
+                        }
+                    ]
+                ]
+            ]);
         });
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
+    public function handle_update_class_request($request) {
+        $class_id = $request->get_param('class_id');
+        $gradebook_id = $request->get_param('gradebook_id');
+        $folder_id = $request->get_param('folder_id');
+        $data = $this->classRepository->updateClass($class_id, $gradebook_id, $folder_id);
+        $response = [
+            'success' => $this->api_errors ? false : true,
+            'data' => $data,
+            'errors' => $this->api_errors
+        ];
+        
+        return new WP_REST_Response($response, $this->api_errors ? 500 : 200);
     }
 
     /**
@@ -159,8 +215,18 @@ class TeachersAPI {
      */
     private function create_class($title, $user_id) {
         $enrollment_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
+        $teacher = get_user_by('id', $user_id);
         try {
+            $teachers_folder_id = get_user_meta($user_id, 'teachers_folder_id', true);
+            $teachers_folder_name = get_user_meta($user_id, 'teachers_folder_name', true);
+            if (!$teachers_folder_name) {
+                $teachers_folder_name = str_replace(' ', '_', $teacher->display_name);
+                update_user_meta($user_id, 'teachers_folder_name', $teachers_folder_name);
+            }
             $data = $this->classRepository->createClass($title, $user_id, $enrollment_code);
+            $data->teachers_folder_name = $teachers_folder_name;
+            $data->teacher_email = $teacher->user_email;
+            $data->teachers_folder_id = $teachers_folder_id;
             return $data;
         } catch (Exception $e) {
             $error_message = $e->getMessage();
@@ -172,6 +238,62 @@ class TeachersAPI {
             }
             return false;
         }
+    }
+
+    /**
+     * Makes a POST request to the class registration microservice.
+     * 
+     * @param string $teachers_folder_name The name of the teacher's folder
+     * @param string $gradebook_name The name of the gradebook
+     * @param string $email The teacher's email
+     * @return array|WP_Error The response from the microservice or WP_Error on failure
+     */
+    private function call_class_registration_microservice($teachers_folder_name, $teachers_folder_id, $gradebook_name, $email, $class_id) {
+        error_log('Calling class registration microservice');
+        $url = getenv("SERVERLESS_BASE_URL") . "/api/client-function";
+        $body = array(
+            'function_name' => 'class-registration-orchestrator',
+            'data' => array(
+                'teacher_name' => $teachers_folder_name,
+                'folder_id' => $teachers_folder_id,
+                'gradebook_name' => $gradebook_name,
+                'email' => $email,
+                'class_id' => $class_id
+            )
+        );
+
+        $args = array(
+            'body' => json_encode($body),
+            'headers' => array(
+                'Content-Type' => 'application/json'
+            ),
+            'timeout' => 30
+        );
+
+        error_log('Request URL: ' . $url);
+        error_log('Request body: ' . json_encode($body));
+        error_log('Request args: ' . print_r($args, true));
+
+        $response = wp_remote_post($url, $args);
+        error_log('Response: ' . print_r($response, true));
+        error_log('Response code: ' . wp_remote_retrieve_response_code($response));
+        error_log('Response body: ' . wp_remote_retrieve_body($response));
+        error_log('Response headers: ' . print_r(wp_remote_retrieve_headers($response), true));
+
+        if (is_wp_error($response)) {
+            $this->api_errors[] = 'Failed to call class registration service: ' . $response->get_error_message();
+            return false;
+        }
+
+        $response_code = wp_remote_retrieve_response_code($response);
+        $response_body = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($response_code !== 200) {
+            $this->api_errors[] = 'Class registration service returned error code: ' . $response_code;
+            return false;
+        }
+
+        return $response_body;
     }
 
     /**
@@ -189,7 +311,16 @@ class TeachersAPI {
             'data' => $data,
             'errors' => $this->api_errors
         ];
+
+        if (empty($this->api_errors)) {
+            $teachers_folder_name = $data->teachers_folder_name;
+            $teachers_folder_id = $data->teachers_folder_id;
+            $gradebook_name = $data->gradebook_file_name;
+            $email = $data->teacher_email;
+            $class_id = $data->id;
+            $this->call_class_registration_microservice($teachers_folder_name, $teachers_folder_id, $gradebook_name, $email, $class_id);
+        }
         
-        return new WP_REST_Response($response, $this->api_errors ? 500 : 200);
+        return new WP_REST_Response($response, 200);
     }
 }

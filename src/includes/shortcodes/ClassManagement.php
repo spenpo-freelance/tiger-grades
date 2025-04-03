@@ -137,7 +137,9 @@ class ClassManagementShortcode {
                     'class_id' => $class_id
                 ));
             } else {
-                $root->appendChild(DOMHelper::createElement($dom, 'div', 'no-enrollments-message', null, 'No enrollments found for this class.'));
+                $empty_row = DOMHelper::createElement($dom, 'tr', 'empty-row');
+                $empty_row->appendChild(DOMHelper::createElement($dom, 'td', 'empty-row-cell empty-state-message', null, 'No enrollments found for this class.', ['colspan' => '5']));
+                $enrollment_table->appendChild($empty_row);
             }
 
             return $dom->saveHTML();
