@@ -34,6 +34,39 @@ class TeacherComponents {
         $root = DOMHelper::createElement($dom, 'div', 'classes-table-container');
         $dom->appendChild($root);
 
+        // Enqueue the JavaScript
+        wp_enqueue_script(
+            'qrcode-js',
+            'https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js',
+            array(),
+            '1.0.0',
+            true
+        );
+
+        // Enqueue Font Awesome
+        wp_enqueue_style(
+            'font-awesome',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+            array(),
+            '6.4.0'
+        );
+
+        wp_enqueue_script(
+            'tiger-grades-enrollment-code',
+            plugins_url('tiger-grades/js/enrollment-code.js', dirname(__FILE__, 3)),
+            array('jquery', 'qrcode-js'),
+            '1.0.0',
+            true
+        );
+
+        // Enqueue the CSS
+        wp_enqueue_style(
+            'tiger-grades-enrollment-code',
+            plugins_url('tiger-grades/css/enrollment-code.css', dirname(__FILE__, 3)),
+            array(),
+            '1.0.0'
+        );
+
         $classes = $this->repository->getTeacherClasses($user_id);
         
         $classes_header_container = DOMHelper::createElement($dom, 'div', 'classes-table-header-container flexbox between');
@@ -93,16 +126,67 @@ class TeacherComponents {
                 $row->appendChild($enrollmentsCell);
 
                 $enrollmentCodeCell = DOMHelper::createElement($dom, 'td', 'classes-table-enrollment-code-cell');
-                $enrollmentCodeCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-enrollment-code-cell-text', null, $class->enrollment_code));
+                $enrollmentCodeContainer = DOMHelper::createElement($dom, 'div', 'enrollment-code-container flexbox between');
+                $enrollmentCodeCell->appendChild($enrollmentCodeContainer);
+
+                // Enrollment code display
+                $codeDisplay = DOMHelper::createElement($dom, 'span', 'classes-table-enrollment-code-cell-text', null, $class->enrollment_code);
+                $enrollmentCodeContainer->appendChild($codeDisplay);
+
+                // Action buttons container
+                $actionButtons = DOMHelper::createElement($dom, 'div', 'enrollment-code-actions flexbox');
+                $enrollmentCodeContainer->appendChild($actionButtons);
+
+                // Copy code button
+                $copyCodeButton = DOMHelper::createElement($dom, 'button', 'copy-code-btn btn btn-icon', null, null, [
+                    'title' => 'Copy enrollment code',
+                    'data-code' => $class->enrollment_code
+                ]);
+                $copyCodeButton->appendChild(DOMHelper::createElement($dom, 'span', 'dashicons dashicons-clipboard'));
+                $actionButtons->appendChild($copyCodeButton);
+
+                // Copy URL button
+                $enrollmentUrl = site_url('/enroll?code=' . $class->enrollment_code);
+                $copyUrlButton = DOMHelper::createElement($dom, 'button', 'copy-url-btn btn btn-icon', null, null, [
+                    'title' => 'Copy enrollment URL',
+                    'data-url' => $enrollmentUrl
+                ]);
+                $copyUrlButton->appendChild(DOMHelper::createElement($dom, 'span', 'dashicons dashicons-admin-links'));
+                $actionButtons->appendChild($copyUrlButton);
+
+                // QR code button
+                $qrCodeButton = DOMHelper::createElement($dom, 'button', 'qr-code-btn btn btn-icon', null, null, [
+                    'title' => 'Show QR code',
+                    'data-url' => $enrollmentUrl
+                ]);
+                $qrCodeButton->appendChild(DOMHelper::createElement($dom, 'i', 'fas fa-qrcode'));
+                $actionButtons->appendChild($qrCodeButton);
+
+                // QR code modal
+                $qrCodeModal = DOMHelper::createElement($dom, 'dialog', 'qr-code-modal');
+                $qrCodeModal->appendChild(DOMHelper::createElement($dom, 'h2', 'qr-code-modal-header', null, 'Enrollment QR Code'));
+                $qrCodeModal->appendChild(DOMHelper::createElement($dom, 'div', 'qr-code-container'));
+                $qrCodeModal->appendChild(DOMHelper::createElement($dom, 'button', 'qr-code-modal-close', null, 'Close'));
+                $enrollmentCodeContainer->appendChild($qrCodeModal);
+
                 $row->appendChild($enrollmentCodeCell);
 
                 $actionsCell = DOMHelper::createElement($dom, 'td', 'classes-table-actions-cell');
                 $actions_container = DOMHelper::createElement($dom, 'div', 'flexbox');
                 $actionsCell->appendChild($actions_container);
-                $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
-                $actions_container->appendChild($manageEnrollmentsButton);
-                $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
-                $actions_container->appendChild($gradesButton);
+                $isActive = $class->status === 'active';
+                if ($isActive) {
+                    $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
+                    $actions_container->appendChild($manageEnrollmentsButton);
+                }
+                if ($isActive) {
+                    $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
+                    $actions_container->appendChild($gradesButton);
+                }
+                if ($isActive) {
+                    $viewGradebookButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'View', ['href' => $class->gradebook_url, 'target' => '_blank', 'rel' => 'noopener noreferrer']);
+                    $actions_container->appendChild($viewGradebookButton);
+                }
                 $row->appendChild($actionsCell);
             }
         }

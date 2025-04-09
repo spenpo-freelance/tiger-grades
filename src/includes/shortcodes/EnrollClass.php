@@ -61,8 +61,6 @@ class EnrollClassShortcode {
             $enrollment_code = isset($_GET['code']) ? sanitize_text_field($_GET['code']) : '';
             
             $class = $this->repository->getClassByEnrollmentCode($enrollment_code);
-            error_log('class: ' . print_r($class, true));
-
             $class_title = $class[0]->title;
             $class_teacher = $class[0]->teacher_name;
 
@@ -76,32 +74,44 @@ class EnrollClassShortcode {
                 'method' => 'POST'
             ]);
             
-            $enrollment_container = DOMHelper::createElement($dom, 'div', 'form-group');
+            $enrollment_container = DOMHelper::createElement($dom, 'div', 'form-group flexbox');
+            $enrollment_code_form_field = DOMHelper::createElement($dom, 'div', 'form-field');
+            $enrollment_code_label = DOMHelper::createElement($dom, 'label', 'form-label', null, 'Enrollment Code');
+            $enrollment_code_form_field->appendChild($enrollment_code_label);
             $enrollment_code_input = DOMHelper::createElement($dom, 'input', 'form-control', null, null, [
                 'placeholder' => 'Enrollment Code', 
                 'required' => 'required', 
                 'type' => 'text', 
                 'name' => 'enrollment_code', 
-                'value' => $enrollment_code
+                'value' => $enrollment_code,
+                'maxlength' => '6'
             ]);
-            $enrollment_container->appendChild($enrollment_code_input);
-            $form->appendChild($enrollment_container);
+            $enrollment_code_form_field->appendChild($enrollment_code_input);
+            $enrollment_container->appendChild($enrollment_code_form_field);
 
-            $student_name_container = DOMHelper::createElement($dom, 'div', 'form-group');
+            $student_name_form_field = DOMHelper::createElement($dom, 'div', 'form-field');
+            $student_name_label = DOMHelper::createElement($dom, 'label', 'form-label', null, 'Student Name');
+            $student_name_form_field->appendChild($student_name_label);
             $student_name_input = DOMHelper::createElement($dom, 'input', 'form-control', null, null, [
                 'placeholder' => 'Student Name', 
                 'required' => 'required', 
                 'type' => 'text', 
                 'name' => 'student_name', 
-                'value' => $student_name
+                'value' => $student_name,
+                'maxlength' => '45'
             ]);
-            $student_name_container->appendChild($student_name_input);
-            $form->appendChild($student_name_container);
+            $student_name_form_field->appendChild($student_name_input);
+            $enrollment_container->appendChild($student_name_form_field);
+            $form->appendChild($enrollment_container);
 
             $optional_message_container = DOMHelper::createElement($dom, 'div', 'form-group');
+            $optional_message_label = DOMHelper::createElement($dom, 'label', 'form-label', null, 'Anything else the teacher should know?');
+            $optional_message_container->appendChild($optional_message_label);
             $optional_message_textarea = DOMHelper::createElement($dom, 'textarea', 'form-control', null, null, [
-                'placeholder' => 'Optional Message', 
-                'name' => 'optional_message'
+                'placeholder' => 'Optional message for the teacher', 
+                'name' => 'optional_message',
+                'rows' => '4',
+                'maxlength' => '100'
             ]);
             $optional_message_container->appendChild($optional_message_textarea);
             $form->appendChild($optional_message_container);

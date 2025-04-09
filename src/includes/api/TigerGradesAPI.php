@@ -241,9 +241,16 @@ class TigerGradesAPI {
      */
     public function handle_students_request($request) {
         $class_id = $request->get_param('class_id');
+        
+        $status = 200;
+
         $data = $this->fetchStudents($class_id);
         
-        return new WP_REST_Response($data, 200);
+        if (is_wp_error($data)) {
+            $status = $data->get_error_data()['status'] ?? 500;
+        }
+        
+        return new WP_REST_Response($data, $status);
     }
 
     /**
@@ -293,12 +300,13 @@ class TigerGradesAPI {
         }
 
         $gradebook_id = $this->classRepository->getGradebookId($class_id);
-        # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
+        error_log("TigerGrades API Debug: Gradebook item ID: " . $gradebook_id);
         $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$gradebook_id}/workbook/worksheets";
+        error_log("TigerGrades API Debug: Graph API URL: " . $this->graph_api_url);
 
         $access_token = $this->jwt_token_manager->get_token();
 
-        $url = "{$this->graph_api_url}/english/usedRange";
+        $url = "{$this->graph_api_url}/grades/usedRange";
 
         $ch = curl_init();
 
@@ -307,6 +315,7 @@ class TigerGradesAPI {
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Authorization: Bearer {$access_token}"
+            // "Range: bytes=0-1048576"  // 1MB chunk size
         ]);
 
         $response = curl_exec($ch);
@@ -314,13 +323,13 @@ class TigerGradesAPI {
         // Add error handling for curl execution
         if ($response === false) {
             # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
-            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
+            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API', ['status' => 500]);
         }
 
         $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         if ($http_code !== 200) {
             # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
-            return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
+            return new WP_Error('api_error', $response, ['status' => $http_code]);
         }
 
         curl_close($ch);

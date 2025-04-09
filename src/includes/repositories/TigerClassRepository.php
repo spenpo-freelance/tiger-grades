@@ -30,10 +30,12 @@ class TigerClassRepository {
     public function getEnrolledClasses($user_id) {
         try {
             $enrollmentQuery = $this->wpdb->prepare("
-                SELECT e.*, c.title as class_title, u.display_name as teacher_name
+                SELECT e.*, c.title as class_title, u.display_name as teacher_name, t.title as type_title, CONCAT('/wp-content/uploads/', pm.meta_value) as type_image_src
                 FROM {$this->wpdb->prefix}tigr_enrollments e
                 LEFT JOIN {$this->wpdb->prefix}tigr_classes c ON e.class_id = c.id
                 LEFT JOIN {$this->wpdb->prefix}users u ON c.teacher = u.ID
+                LEFT JOIN {$this->wpdb->prefix}tigr_class_types t ON c.type = t.id
+                LEFT JOIN {$this->wpdb->prefix}postmeta pm ON t.image = pm.post_id AND pm.meta_key = '_wp_attached_file'
                 WHERE e.user_id = %d
             ", $user_id);
             
@@ -243,9 +245,12 @@ class TigerClassRepository {
                     c.*, 
                     c.title as class_title,
                     COUNT(e.id) as total_enrollments,
-                    SUM(CASE WHEN e.status = 'pending' THEN 1 ELSE 0 END) as pending_enrollments
+                    SUM(CASE WHEN e.status = 'pending' THEN 1 ELSE 0 END) as pending_enrollments,
+                    CONCAT('/wp-content/uploads/', pm.meta_value) as type_image_src
                 FROM {$this->wpdb->prefix}tigr_classes c
                 LEFT JOIN {$this->wpdb->prefix}tigr_enrollments e ON c.id = e.class_id
+                LEFT JOIN {$this->wpdb->prefix}tigr_class_types t ON c.type = t.id
+                LEFT JOIN {$this->wpdb->prefix}postmeta pm ON t.image = pm.post_id AND pm.meta_key = '_wp_attached_file'
                 WHERE c.teacher = %d
                 GROUP BY c.id
             ", $teacher_id);
@@ -268,13 +273,13 @@ class TigerClassRepository {
      * @return array Array of text section objects
      * @throws Exception When database error occurs
      */
-    public function updateClass($class_id, $gradebook_id, $folder_id) {
+    public function updateClass($class_id, $gradebook_id, $folder_id, $gradebook_url) {
         try {
             $query = $this->wpdb->prepare("
                 UPDATE {$this->wpdb->prefix}tigr_classes
-                SET gradebook_id = %s
+                SET gradebook_id = %s, gradebook_url = %s
                 WHERE id = %d
-            ", $gradebook_id, $class_id);
+            ", $gradebook_id, $gradebook_url, $class_id);
             
             $this->wpdb->query($query);
             
@@ -312,10 +317,14 @@ class TigerClassRepository {
                 throw new Exception($this->wpdb->last_error);
             }
 
-            $gradebook_name = str_replace(' ', '_', $title) . '_Gradebook.xlsx';
+            $gradebook_base = str_replace(' ', '_', $title);
+            $gradebook_extension = '_Gradebook.xlsx';
+            $gradebook_name = $gradebook_base . $gradebook_extension;
             $i = 1;
-            while (in_array($gradebook_name, $current_gradebooks)) {
-                $gradebook_name = str_replace('.xlsx', '_' . $i . '.xlsx', $gradebook_name);
+            while (array_filter($current_gradebooks, function($gradebook) use ($gradebook_name) {
+                return $gradebook->gradebook_file_name === $gradebook_name;
+            })) {
+                $gradebook_name = $gradebook_base . '_' . $i . $gradebook_extension;
                 $i++;
             }
 
@@ -331,13 +340,13 @@ class TigerClassRepository {
      * @return array Array of text section objects
      * @throws Exception When database error occurs
      */
-    public function createClass($title, $teacher_id, $enrollment_code) {
+    public function createClass($title, $teacher_id, $enrollment_code, $class_type_id, $num_students, $num_categories, $description, $message, $start_date, $end_date) {
         try {
             $gradebook_name = $this->produce_unique_gradebook_name($title, $teacher_id);
             $query = $this->wpdb->prepare("
-                INSERT INTO {$this->wpdb->prefix}tigr_classes (title, teacher, enrollment_code, gradebook_file_name)
-                VALUES (%s, %d, %s, %s)
-            ", $title, $teacher_id, $enrollment_code, $gradebook_name);
+                INSERT INTO {$this->wpdb->prefix}tigr_classes (title, teacher, enrollment_code, gradebook_file_name, type, num_students, num_categories, description, message, start_date, end_date)
+                VALUES (%s, %d, %s, %s, %d, %d, %d, %s, %s, %s, %s)
+            ", $title, $teacher_id, $enrollment_code, $gradebook_name, $class_type_id, $num_students, $num_categories, $description, $message, $start_date, $end_date);
             
             $this->wpdb->query($query);
             
@@ -349,6 +358,68 @@ class TigerClassRepository {
             $new_class = $this->getClass($class_id);
 
             return $new_class;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Retrieves all class types for a select element.
+     * 
+     * @return array Array of class types
+     * @throws Exception When database error occurs
+     */
+    public function getClassTypes() {
+        try {
+            $query = $this->wpdb->prepare("
+                SELECT t.*, CONCAT('/wp-content/uploads/', pm.meta_value) as image_src
+                FROM {$this->wpdb->prefix}tigr_class_types t
+                LEFT JOIN {$this->wpdb->prefix}postmeta pm ON t.image = pm.post_id AND pm.meta_key = '_wp_attached_file'
+                ORDER BY t.title ASC
+            ");
+            
+            $results = $this->wpdb->get_results($query);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+
+            return $results;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Retrieves all class options for a select element.
+     * 
+     * @return array Array of class options
+     * @throws Exception When database error occurs
+     */
+    public function getClassRegistrationOptions() {
+        try {
+            $query = $this->wpdb->prepare("
+                SELECT o.*, fl.title as feature_title
+                FROM {$this->wpdb->prefix}tigr_range_options o
+                LEFT JOIN {$this->wpdb->prefix}tigr_feature_range_options_junction fro ON o.id = fro.range_option_id
+                LEFT JOIN {$this->wpdb->prefix}tigr_feature_lookup fl ON fro.feature_lookup_id = fl.id
+                WHERE fl.parent_feature = 1 -- id of registration form parent feature
+                AND o.status = 'active'
+                ORDER BY o.min ASC
+            ");
+            
+            $results = $this->wpdb->get_results($query);
+            // return an object with the feature_title as the key and an array of options as the value
+            $options = [];
+            foreach ($results as $result) {
+                $options[$result->feature_title][] = $result;
+            }
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+
+            return $options;
         } catch (Exception $e) {
             throw $e;
         }

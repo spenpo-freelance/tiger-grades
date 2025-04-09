@@ -249,3 +249,185 @@ dialog::backdrop {
 .register-class-btn {
     align-self: center;
 }
+
+.class-type-selection-container {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.class-type-selection-container-item {
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 10px;
+    width: 170px;
+    flex: 0 0 170px;
+    position: relative;
+}
+
+.class-type-selection-container-item:hover {
+    outline: 1px solid #03c4eb;
+}
+
+.class-type-selection-container-item-image {
+    object-fit: cover;
+    width: 150px;
+}
+
+.class-type-selection-container-item input[type="radio"] {
+    position: absolute;
+    clip: rect(0, 0, 0, 0);
+    pointer-events: none;
+}
+
+/* Add a selected state style */
+.class-type-selection-container-item:active, 
+.class-type-selection-container-item:has(input[type="radio"]:checked) {
+    outline: 2px solid #03c4eb;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.class-flex-container {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 20px;
+}
+
+.past-classes {
+    margin-bottom: 20px;
+}
+
+.class-flex-container .class-card {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    gap: 5px;
+    width: 170px; /* Fixed width instead of min-width */
+    flex: 0 0 170px; /* Don't grow or shrink, just maintain 170px width */
+}
+
+.class-flex-container .class-card .class-link-wrapper {
+    margin: 10px 0 0;
+}
+
+.class-type-selection-container-item-title {
+    max-width: 150px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.form-field {
+    flex: 1;
+}
+
+.form-label-container {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
+.form-label-container .form-label {
+    margin-right: 2px;
+}
+
+.form-subtitle {
+    color: #666;
+    font-size: 0.9em;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #03c4eb;
+    box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
+}
+
+.form-group:not(:last-of-type) {
+    padding-bottom: 1rem;
+    /* border-bottom: 1px solid #ddd; */
+}
+
+.date-inputs-container {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.date-input-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.date-input-wrapper label {
+    margin-bottom: 0.5rem;
+}
+
+.date-input-wrapper input {
+    width: 100%;
+}
+
+@media (max-width: 576px) {
+    .date-inputs-container {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+.expand-past-classes-input {
+    display: none;
+}
+
+.expand-past-classes-label {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #f0f0f0;
+    border-radius: 4px;
+    cursor: pointer;
+    margin: 10px 0;
+    transition: background-color 0.3s ease;
+}
+
+.expand-past-classes-label:hover {
+    background-color: #e0e0e0;
+}
+
+.past-classes-container {
+    display: none;
+    margin-top: 10px;
+}
+
+.expand-past-classes-input:checked ~ .past-classes-container {
+    display: flex;
+}
+
+.expand-past-classes-input:checked + .expand-past-classes-label {
+    background-color: #e0e0e0;
+}
+
+.expand-past-classes-input:checked + .expand-past-classes-label::after {
+    content: "Hide past classes";
+}
+
+.expand-past-classes-label::after {
+    content: "Show past classes";
+}

@@ -72,6 +72,34 @@ class TeachersAPI {
                     'title' => [
                         'required' => true,
                         'type' => 'string'
+                    ],
+                    'type' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'num_students' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'num_categories' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'description' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'message' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'start_date' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'end_date' => [
+                        'required' => true,
+                        'type' => 'string'
                     ]
                 ]
             ]);
@@ -132,6 +160,10 @@ class TeachersAPI {
                         'required' => true,
                         'type' => 'string'
                     ],
+                    'gradebook_url' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
                     'folder_id' => [
                         'required' => false,
                         'type' => 'string',
@@ -154,7 +186,8 @@ class TeachersAPI {
         $class_id = $request->get_param('class_id');
         $gradebook_id = $request->get_param('gradebook_id');
         $folder_id = $request->get_param('folder_id');
-        $data = $this->classRepository->updateClass($class_id, $gradebook_id, $folder_id);
+        $gradebook_url = $request->get_param('gradebook_url');
+        $data = $this->classRepository->updateClass($class_id, $gradebook_id, $folder_id, $gradebook_url);
         $response = [
             'success' => $this->api_errors ? false : true,
             'data' => $data,
@@ -213,7 +246,7 @@ class TeachersAPI {
      * @param int $user_id The ID of the user creating the class
      * @return array|false The class data or false if an error occurs
      */
-    private function create_class($title, $user_id) {
+    private function create_class($title, $user_id, $class_type_id, $num_students, $num_categories, $description, $message, $start_date, $end_date) {
         $enrollment_code = substr(str_shuffle('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 6);
         $teacher = get_user_by('id', $user_id);
         try {
@@ -223,7 +256,7 @@ class TeachersAPI {
                 $teachers_folder_name = str_replace(' ', '_', $teacher->display_name);
                 update_user_meta($user_id, 'teachers_folder_name', $teachers_folder_name);
             }
-            $data = $this->classRepository->createClass($title, $user_id, $enrollment_code);
+            $data = $this->classRepository->createClass($title, $user_id, $enrollment_code, $class_type_id, $num_students, $num_categories, $description, $message, $start_date, $end_date);
             $data->teachers_folder_name = $teachers_folder_name;
             $data->teacher_email = $teacher->user_email;
             $data->teachers_folder_id = $teachers_folder_id;
@@ -232,7 +265,7 @@ class TeachersAPI {
             $error_message = $e->getMessage();
             if (str_contains($error_message, 'Duplicate entry') && 
                 str_contains($error_message, 'tigr_classes.enrollment_code_UNIQUE')) {
-                return $this->create_class($title, $user_id);
+                return $this->create_class($title, $user_id, $class_type_id, $num_students, $num_categories, $description, $message, $start_date, $end_date);
             } else {
                 $this->api_errors[] = $error_message;
             }
@@ -305,7 +338,14 @@ class TeachersAPI {
     public function handle_create_class_request($request) {
         $user_id = get_current_user_id();
         $title = $request->get_param('title');
-        $data = $this->create_class($title, $user_id);
+        $type = $request->get_param('type');
+        $num_students = $request->get_param('num_students');
+        $num_categories = $request->get_param('num_categories');
+        $description = $request->get_param('description');
+        $message = $request->get_param('message');
+        $start_date = $request->get_param('start_date');
+        $end_date = $request->get_param('end_date');
+        $data = $this->create_class($title, $user_id, $type, $num_students, $num_categories, $description, $message, $start_date, $end_date);
         $response = [
             'success' => $this->api_errors ? false : true,
             'data' => $data,
