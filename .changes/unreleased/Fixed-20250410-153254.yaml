@@ -1,0 +1,3 @@
+kind: Fixed
+body: logical error with past classes element being appended when it doesn't exist
+time: 2025-04-10T15:32:54.590485+08:00

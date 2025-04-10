@@ -233,9 +233,10 @@ class TigerClassRepository {
     }
 
     /**
-     * Retrieves all text sections from the database.
+     * Retrieves all classes for a teacher.
      * 
-     * @return array Array of text section objects
+     * @param int $teacher_id The ID of the teacher
+     * @return array Array of class objects
      * @throws Exception When database error occurs
      */
     public function getTeacherClasses($teacher_id) {

@@ -41,6 +41,11 @@ class ParentClassesShortcode {
         $user = wp_get_current_user();
         $user_id = $user->ID;
         $is_teacher = in_array('teacher', (array) $user->roles);
+        
+        // Debug logging
+        // error_log("User ID: " . $user_id);
+        // error_log("User Roles: " . print_r($user->roles, true));
+        // error_log("Is Teacher: " . ($is_teacher ? 'true' : 'false'));
 
         $dom = new DOMDocument('1.0', 'utf-8');
         // Create a root container for all sections
@@ -51,10 +56,21 @@ class ParentClassesShortcode {
             $classes = null;
             $teacher_name = null;
             if ($is_teacher) {
-                $classes = $this->repository->getTeacherClasses($user_id);
-                $teacher_name = $user->display_name;
+                try {
+                    $classes = $this->repository->getTeacherClasses($user_id);
+                    error_log("Teacher Classes: " . print_r($classes, true));
+                    $teacher_name = $user->display_name;
+                } catch (Exception $e) {
+                    error_log("Error getting teacher classes: " . $e->getMessage());
+                    $classes = [];
+                }
             } else {
-                $classes = $this->repository->getEnrolledClasses($user_id);
+                try {
+                    $classes = $this->repository->getEnrolledClasses($user_id);
+                } catch (Exception $e) {
+                    error_log("Error getting enrolled classes: " . $e->getMessage());
+                    $classes = [];
+                }
             }
 
             // filter classes into current and past classes
@@ -67,6 +83,10 @@ class ParentClassesShortcode {
 
             $root->appendChild(DOMHelper::createElement($dom, 'h2', 'Classes', null, 'Your child is in the following classes'));
             $current_classes_flex_container = DOMHelper::createElement($dom, 'div', 'class-flex-container');
+            
+            // Initialize past_classes_flex_container
+            $past_classes_flex_container = null;
+            
             if (count($classes) > 0) {
                 if (count($past_classes) > 0) {
                     $past_classes_flex_container = DOMHelper::createElement($dom, 'div', 'past-classes flexbox column');
@@ -99,7 +119,11 @@ class ParentClassesShortcode {
                 $no_classes_message->appendChild(DOMHelper::createElement($dom, 'span', 'no-classes-message-text', null, 'No classes found'));
                 $root->appendChild($no_classes_message);
             }
-            $root->appendChild($past_classes_flex_container);
+            
+            // Only append past_classes_flex_container if it was created
+            if ($past_classes_flex_container) {
+                $root->appendChild($past_classes_flex_container);
+            }
             $root->appendChild($current_classes_flex_container);
 
             return $dom->saveHTML();
