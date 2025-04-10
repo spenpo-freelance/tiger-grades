@@ -244,6 +244,7 @@ class TigerClassRepository {
                 SELECT 
                     c.*, 
                     c.title as class_title,
+                    t.title as type_title,
                     COUNT(e.id) as total_enrollments,
                     SUM(CASE WHEN e.status = 'pending' THEN 1 ELSE 0 END) as pending_enrollments,
                     CONCAT('/wp-content/uploads/', pm.meta_value) as type_image_src

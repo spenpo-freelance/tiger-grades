@@ -1,0 +1,3 @@
+kind: Fixed
+body: added missing type_title column to TeacherClasses query
+time: 2025-04-10T13:59:12.916815+08:00
