@@ -321,7 +321,7 @@ class TeachersAPI {
         $response_code = wp_remote_retrieve_response_code($response);
         $response_body = json_decode(wp_remote_retrieve_body($response), true);
 
-        if ($response_code !== 200) {
+        if ($response_code !== 202) {
             $this->api_errors[] = 'Class registration service returned error code: ' . $response_code;
             return false;
         }
@@ -346,11 +346,7 @@ class TeachersAPI {
         $start_date = $request->get_param('start_date');
         $end_date = $request->get_param('end_date');
         $data = $this->create_class($title, $user_id, $type, $num_students, $num_categories, $description, $message, $start_date, $end_date);
-        $response = [
-            'success' => $this->api_errors ? false : true,
-            'data' => $data,
-            'errors' => $this->api_errors
-        ];
+        $response['data'] = $data;
 
         if (empty($this->api_errors)) {
             $teachers_folder_name = $data->teachers_folder_name;
@@ -358,9 +354,18 @@ class TeachersAPI {
             $gradebook_name = $data->gradebook_file_name;
             $email = $data->teacher_email;
             $class_id = $data->id;
-            $this->call_class_registration_microservice($teachers_folder_name, $teachers_folder_id, $gradebook_name, $email, $class_id);
+            try {
+                $microservice_response = $this->call_class_registration_microservice($teachers_folder_name, $teachers_folder_id, $gradebook_name, $email, $class_id);
+                if ($microservice_response) {
+                    $response['microservice_response'] = $microservice_response;
+                }
+            } catch (Exception $e) {
+                $this->api_errors[] = 'Failed to call class registration service: ' . $e->getMessage();
+            }
         }
         
+        $response['success'] = $this->api_errors ? false : true;
+        $response['errors'] = $this->api_errors;
         return new WP_REST_Response($response, 200);
     }
 }
