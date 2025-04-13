@@ -131,7 +131,7 @@ class TeachersAPI {
                 'callback' => [$this, 'handle_approve_enrollment_request'],
                 'permission_callback' => function() {
                     $user = wp_get_current_user();
-                    $can_access = is_user_logged_in() && in_array('subscriber', (array) $user->roles);
+                    $can_access = is_user_logged_in() && in_array('teacher', (array) $user->roles);
                     return $can_access;
                 },
                 'args' => [
