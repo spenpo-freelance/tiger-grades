@@ -30,7 +30,7 @@ class TigerClassRepository {
     public function getEnrolledClasses($user_id) {
         try {
             $enrollmentQuery = $this->wpdb->prepare("
-                SELECT e.*, c.title as class_title, u.display_name as teacher_name, t.title as type_title, CONCAT('/wp-content/uploads/', pm.meta_value) as type_image_src
+                SELECT e.*, c.end_date, c.title as class_title, u.display_name as teacher_name, t.title as type_title, CONCAT('/wp-content/uploads/', pm.meta_value) as type_image_src
                 FROM {$this->wpdb->prefix}tigr_enrollments e
                 LEFT JOIN {$this->wpdb->prefix}tigr_classes c ON e.class_id = c.id
                 LEFT JOIN {$this->wpdb->prefix}users u ON c.teacher = u.ID
