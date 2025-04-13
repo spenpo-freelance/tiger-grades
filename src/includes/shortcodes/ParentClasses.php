@@ -138,6 +138,7 @@ class ParentClassesShortcode {
     }
 
     private function createClassCard($dom, $class, $teacher_name, $is_teacher) {
+        $teacher_name = $class->teacher_name ?? $teacher_name;
         $class_card = DOMHelper::createElement($dom, 'div', 'class-card');
         $class_image_link = DOMHelper::createElement($dom, 'a', 'class-image-link', null, null, ['href' => $class->id]);
         $class_image_link->appendChild(DOMHelper::createElement($dom, 'img', 'class-image', null, null,
