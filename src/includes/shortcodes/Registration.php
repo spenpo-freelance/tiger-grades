@@ -46,11 +46,13 @@ class RegistrationShortcode {
         $root->appendChild($header);
         $root->appendChild($subHeader);
         $dom->appendChild($root);
-        $form_control = DOMHelper::createElement($dom, 'div', 'registration-buttons');
-        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button active', null, 'Parent/Student', [
+        $form_control = DOMHelper::createElement($dom, 'div', 'registration-buttons', null, null, [
+            'data-active' => 'user'
+        ]);
+        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, 'Parent/Student', [
             'type' => 'button',
             'name' => 'email',
-            'data-form-id' => 'user'
+            'data-form-id' => 'user',
         ]));
         $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, 'Teacher', [
             'type' => 'button',

@@ -192,6 +192,13 @@ dialog::backdrop {
     display: flex;
     gap: 0;
     justify-content: center;
+    position: relative;
+    padding: 2px;
+    background-color: #f0f0f0;
+    border-radius: 25px;
+    width: 400px; /* 200px per button */
+    margin: 0 auto;
+    box-shadow: 0 0 4px #00000030;
 }
 
 .registration-button {
@@ -201,7 +208,15 @@ dialog::backdrop {
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 2;
+    background-color: transparent;
+    color: #333;
+}
+
+.registration-button:focus {
+    outline: none;
 }
 
 .registration-button:first-child {
@@ -212,21 +227,31 @@ dialog::backdrop {
     border-radius: 0 25px 25px 0;
 }
 
-.registration-button:hover {
+/* Add a sliding indicator */
+.registration-buttons::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 200px;
+    height: 100%;
     background-color: #03c4eb;
-    border-color: #03c4eb;
+    border-radius: 25px;
+    transition: transform 0.3s ease;
+    z-index: 1;
+}
+
+.registration-buttons[data-active="teacher"] .registration-button:last-child {
     color: #fff;
 }
 
-.registration-button:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
+.registration-buttons[data-active="user"] .registration-button:first-child {
+    color: #fff;
 }
 
-.registration-button.active {
-    background-color: #03c4eb;
-    border-color: #03c4eb;
-    color: #fff;
+/* Move the sliding indicator when the teacher button is active */
+.registration-buttons[data-active="teacher"]::after {
+    transform: translateX(100%);
 }
 
 .hide {

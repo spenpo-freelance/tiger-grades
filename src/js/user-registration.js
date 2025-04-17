@@ -1,14 +1,16 @@
 jQuery(document).ready(function($) {
     const registrationButtons = $('.registration-button');
     const registrationFormContainer = $('.registration-form-container');
+    const registrationButtonsContainer = $('.registration-buttons');
     const cachedForms = {};
     cachedForms.user = registrationFormContainer.html();
     fetchTeacherForm();
     
     registrationButtons.on('click', function() {
-        registrationButtons.removeClass('active');
-        $(this).addClass('active');
         const formId = $(this).data('form-id');
+        
+        // Update the container's data-active attribute
+        registrationButtonsContainer.attr('data-active', formId);
         
         // Use cached form if available
         if (cachedForms[formId]) {
