@@ -442,38 +442,7 @@ class TigerGradesAPI {
         return $result;
     }
 
-    /**
-     * Fetches and formats all report card data from the repository.
-     * 
-     * @param int $user_id The ID of the user to fetch report card data for
-     * @param string $enrollment_id The ID of the enrollment to fetch report card data for
-     * @param string $sort_by The field to sort the grades by
-     * @param string $type The type of grades to fetch
-     * @param bool $is_teacher Whether the user is a teacher
-     * @return array Formatted report card sections
-     * //////////////////////////////////////////////
-     * //////// CAVEAT: when $is_teacher is true, $enrollment_id is actually the class_id
-     * //////////////////////////////////////////////
-     */
-    public function fetchReportCard($user_id, $enrollment_id, $sort_by = 'date', $type = 'all', $is_teacher = false) {
-        if (!$this->getAccessToken()) {
-            return new WP_Error('api_error', 'Failed to acquire access token');
-        }
-
-        $class = null;
-        if ($is_teacher) {
-            $class = $this->classRepository->getClass($enrollment_id);
-        } else {
-            $class = $this->classRepository->getClassFromEnrollment($enrollment_id);
-        }
-        $this->gradebook_item_id = $class->gradebook_id;
-        error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
-        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
-
-        $access_token = $this->jwt_token_manager->get_token();
-
-        $url = "{$this->graph_api_url}/grades/usedRange";
-
+    private function fetchDataWithCurl($url, $access_token) {
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -513,6 +482,54 @@ class TigerGradesAPI {
             return new WP_Error('data_error', 'Invalid data structure in API response');
         }
 
+        return $data;
+    }
+
+    /**
+     * Fetches and formats all report card data from the repository.
+     * 
+     * @param int $user_id The ID of the user to fetch report card data for
+     * @param string $enrollment_id The ID of the enrollment to fetch report card data for
+     * @param string $sort_by The field to sort the grades by
+     * @param string $type The type of grades to fetch
+     * @param bool $is_teacher Whether the user is a teacher
+     * @return array Formatted report card sections
+     * //////////////////////////////////////////////
+     * //////// CAVEAT: when $is_teacher is true, $enrollment_id is actually the class_id
+     * //////////////////////////////////////////////
+     */
+    public function fetchReportCard($user_id, $enrollment_id, $sort_by = 'date', $type = 'all', $is_teacher = false) {
+        if (!$this->getAccessToken()) {
+            return new WP_Error('api_error', 'Failed to acquire access token');
+        }
+
+        $class = null;
+        if ($is_teacher) {
+            $class = $this->classRepository->getClass($enrollment_id);
+        } else {
+            $class = $this->classRepository->getClassFromEnrollment($enrollment_id);
+        }
+        $this->gradebook_item_id = $class->gradebook_id;
+        error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
+
+        $access_token = $this->jwt_token_manager->get_token();
+
+        $grades_url = "{$this->graph_api_url}/grades/usedRange";
+        $averages_url = "{$this->graph_api_url}/averages/usedRange";
+
+        $data = $this->fetchDataWithCurl($grades_url, $access_token);
+        if (is_wp_error($data)) {
+            return $data;
+        }
+
+        $averages_data = $this->fetchDataWithCurl($averages_url, $access_token);
+        if (is_wp_error($averages_data)) {
+            return $averages_data;
+        }
+
+        $category_names = $averages_data->text[0];
+
         if ($is_teacher) {
             $dates = $data->text[0];
             $types = array_map('strtolower', $data->text[1]);
@@ -531,8 +548,10 @@ class TigerGradesAPI {
             for ($row = 4; $row < count($data->text); $row++) {
                 $student_data = $data->text[$row];
                 if (empty($student_data[0])) continue;
+
+                $averages = $averages_data->text[$row - 3];
                 
-                $result = $this->createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $type, $sort_by);
+                $result = $this->createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $averages, $category_names, $type, $sort_by);
                 if ($result) {
                     $results[] = $result;
                 }
@@ -568,12 +587,21 @@ class TigerGradesAPI {
                 }
             }
 
+            // Find student's averages array
+            $averages = null;
+            foreach ($averages_data->text as $row) {
+                if (isset($row[0]) && $row[0] == (string)$student_id) {
+                    $averages = $row;
+                    break;
+                }
+            }
+
             if (!$student_data) {
                 return new WP_Error('data_error', 'Student data not found');
             }
 
             return $this->appendClassMetadata(
-                $this->createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $type, $sort_by),
+                $this->createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $averages, $category_names, $type, $sort_by),
                 $class
             );
         }
@@ -592,7 +620,7 @@ class TigerGradesAPI {
      * @param string $sort_by Sort field
      * @return stdClass|null Report card object or null if invalid data
      */
-    private function createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $type, $sort_by) {
+    private function createReportCardObject($student_data, $dates, $types, $type_labels, $totals, $names, $averages, $category_names, $type, $sort_by) {
         if (empty($student_data[0]) || empty($student_data[1])) {
             return null;
         }
@@ -603,13 +631,14 @@ class TigerGradesAPI {
         $result->name = $student_data[1];
         $result->avg = new stdClass();
         $result->avg->final = $student_data[2];
-        $result->avg->{$names[3]} = $student_data[3];
-        $result->avg->{$names[4]} = $student_data[4];
-        $result->avg->{$names[5]} = $student_data[5];
-        $result->avg->{$names[6]} = $student_data[6];
+
+        for ($i = 2; $i < count($averages); $i++) {
+            if (empty($averages[$i])) continue;
+            $result->avg->{$category_names[$i]} = $averages[$i];
+        }
 
         // Process individual grades
-        for ($i = 7; $i < count($dates); $i++) {
+        for ($i = 3; $i < count($dates); $i++) {
             if (empty($dates[$i])) continue;
             if ($type !== 'all' && $types[$i] !== $type) continue;
 

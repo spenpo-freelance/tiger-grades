@@ -290,7 +290,7 @@ jQuery(document).ready(function($) {
         const className = data.class || 'Class'; // Fallback if class_name isn't available
         
         // Set title
-        let title = `${studentName}'s ${className}`;
+        let title = `${studentName}'s ${className} Report`;
         
         if (type) title += ` ${
             type === 'all' ? 'Report Card' : `${type.charAt(0).toUpperCase() + type.slice(1)} Grades`
@@ -301,7 +301,8 @@ jQuery(document).ready(function($) {
         
         // Add metadata
         doc.setFontSize(12);
-        doc.text(`Teacher: ${data.teacher}`, 14, yPos);
+        // doc.text(`Teacher: ${data.teacher}`, 14, yPos);
+        doc.text(`Teacher: Mr. Pope`, 14, yPos);
         
         // Create table data
         let tableColumn;
@@ -368,9 +369,8 @@ jQuery(document).ready(function($) {
             });
 
             generateTable(doc, yPos, tableColumn, tableRows);
+            addFooter(doc);
         });
-
-        addFooter(doc);
 
         // Generate filename
         const filename = `${data.class.replace(/\s+/g, '_')}_Reports.pdf`;
@@ -399,7 +399,7 @@ jQuery(document).ready(function($) {
     function addFooter(doc) {
         // Add footer with timestamp
         const now = new Date();
-        const timestamp = `Generated on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
+        const timestamp = `Generated with tigergrades.com on: ${now.toLocaleDateString()} at ${now.toLocaleTimeString()}`;
         doc.setFontSize(10);
         doc.text(timestamp, 14, doc.internal.pageSize.height - 10);
     }
