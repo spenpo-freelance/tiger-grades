@@ -301,8 +301,7 @@ jQuery(document).ready(function($) {
         
         // Add metadata
         doc.setFontSize(12);
-        // doc.text(`Teacher: ${data.teacher}`, 14, yPos);
-        doc.text(`Teacher: Mr. Pope`, 14, yPos);
+        doc.text(`Teacher: ${data.teacher}`, 14, yPos);
         
         // Create table data
         let tableColumn;
