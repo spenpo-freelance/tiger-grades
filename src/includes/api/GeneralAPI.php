@@ -92,7 +92,33 @@ class GeneralAPI {
                 array('status' => 400)
             );
         }
+
+        // Capture the current state of enqueued scripts
+        global $wp_scripts;
+        $initial_scripts = $wp_scripts->queue;
         
-        return array('rendered' => do_shortcode($shortcode));
+        // Render the shortcode
+        $rendered = do_shortcode($shortcode);
+        
+        // Get the newly enqueued scripts
+        $new_scripts = array_diff($wp_scripts->queue, $initial_scripts);
+        $script_data = array();
+        
+        foreach ($new_scripts as $handle) {
+            if (isset($wp_scripts->registered[$handle])) {
+                $script = $wp_scripts->registered[$handle];
+                $script_data[] = array(
+                    'handle' => $handle,
+                    'src' => $script->src,
+                    'deps' => $script->deps,
+                    'ver' => $script->ver
+                );
+            }
+        }
+        
+        return array(
+            'rendered' => $rendered,
+            'scripts' => $script_data
+        );
     }
 }

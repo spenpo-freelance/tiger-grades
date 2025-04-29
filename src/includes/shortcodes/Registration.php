@@ -20,14 +20,6 @@ class RegistrationShortcode {
         $this->api = $this->getAPI();
         // Register the shortcode
         add_shortcode('tigr_registration', [$this, 'render']);
-        $this->text_translations = [
-            'en' => [
-                'version' => 'Version',
-            ],
-            'zh' => [
-                'version' => '版本',
-            ],
-        ];
     }
 
     /**
@@ -74,7 +66,7 @@ class RegistrationShortcode {
             'tiger-grades-user-registration',
             plugins_url('tiger-grades/js/user-registration.js', dirname(__FILE__, 3)),
             array('jquery'),
-            '1.0.0',
+            '1.0.1',
             true
         );
         wp_localize_script(
@@ -83,6 +75,7 @@ class RegistrationShortcode {
             array(
                 'hcaptcha_site_key' => get_option('tigr_hcaptcha_site_key'),
                 'teacher_form_id' => get_option('tigr_ur_teacher_form_id'),
+                'user_form_id' => get_option('tigr_ur_user_form_id'),
                 'ajax_url' => rest_url('tiger-grades/v1/shortcode')
             )
         );
