@@ -5,9 +5,11 @@ use WP_REST_Response;
 use WP_Error;
 use stdClass;
 use DateTime;
-use Spenpo\TigerGrades\API\JwtTokenManager;
 use Exception;
 use Spenpo\TigerGrades\Repositories\TigerClassRepository;
+use Spenpo\TigerGrades\Services\MicrosoftAuthService;
+use Spenpo\TigerGrades\Services\HttpService;
+use Spenpo\TigerGrades\Utilities\SecurityManager;
 /**
  * Handles all TigerGrades API functionality and route registration.
  * 
@@ -17,14 +19,22 @@ use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 class TeachersAPI {
     /** @var self|null */
     private static $instance = null;
+    private $auth_service;
+    private $gradebook_item_id;
+    private $graph_api_url;
     private $api_errors;
     private $classRepository;
+    private $httpService;
+    private $securityManager;
     /**
      * Private constructor to prevent direct instantiation.
      * Use getInstance() instead.
      */
     private function __construct() {
         $this->classRepository = new TigerClassRepository();
+        $this->securityManager = new SecurityManager();
+        $this->auth_service = new MicrosoftAuthService('tigr_functions');
+        $this->httpService = HttpService::getInstance();
         $this->register_routes();
         $this->api_errors = array();
     }
@@ -47,18 +57,6 @@ class TeachersAPI {
      * @return void
      */
     public function register_routes() {
-        ///////////////////////////////////
-        //////// FOR TESTING ONLY ////////
-        ////////////////////////////////
-        remove_filter('rest_authentication_errors', 'rest_authentication_errors');
-        add_filter('rest_authentication_errors', function($result) {
-            if (true === $result || is_wp_error($result)) {
-                return $result;
-            }
-            
-            return true;
-        });
-
         add_action('rest_api_init', function() {
             register_rest_route('tiger-grades/v1', '/create-class', [
                 'methods' => 'POST',
@@ -148,9 +146,7 @@ class TeachersAPI {
             register_rest_route('tiger-grades/v1', '/update-class', [
                 'methods' => 'POST',
                 'callback' => [$this, 'handle_update_class_request'],
-                'permission_callback' => function() {
-                    return true;
-                },
+                'permission_callback' => [$this->securityManager, 'check_route_permission'],
                 'args' => [
                     'gradebook_id' => [
                         'required' => true,
@@ -282,8 +278,12 @@ class TeachersAPI {
      * @return array|WP_Error The response from the microservice or WP_Error on failure
      */
     private function call_class_registration_microservice($teachers_folder_name, $teachers_folder_id, $gradebook_name, $email, $class_id) {
+        if (!$this->auth_service->getAccessToken(getenv("TIGER_GRADES_AZURE_FUNCTIONS_AUDIENCE"))) {
+            return new WP_Error('api_error', 'Failed to acquire access token');
+        }
+
         error_log('Calling class registration microservice');
-        $url = getenv("SERVERLESS_BASE_URL") . "/api/client-function";
+        $url = getenv("TIGER_GRADES_AZURE_FUNCTIONS_BASE_URL") . "/api/client-function";
         $body = array(
             'function_name' => 'class-registration-orchestrator',
             'data' => array(
@@ -295,38 +295,30 @@ class TeachersAPI {
             )
         );
 
-        $args = array(
-            'body' => json_encode($body),
-            'headers' => array(
-                'Content-Type' => 'application/json'
-            ),
-            'timeout' => 30
+        $access_token = $this->auth_service->getToken();
+
+        $headers = array(
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . $access_token
         );
 
         error_log('Request URL: ' . $url);
         error_log('Request body: ' . json_encode($body));
-        error_log('Request args: ' . print_r($args, true));
+        error_log('Request headers: ' . print_r($headers, true));
 
-        $response = wp_remote_post($url, $args);
-        error_log('Response: ' . print_r($response, true));
-        error_log('Response code: ' . wp_remote_retrieve_response_code($response));
-        error_log('Response body: ' . wp_remote_retrieve_body($response));
-        error_log('Response headers: ' . print_r(wp_remote_retrieve_headers($response), true));
-
+        $response = $this->httpService->postJson($url, $headers, $body);
+        
         if (is_wp_error($response)) {
             $this->api_errors[] = 'Failed to call class registration service: ' . $response->get_error_message();
             return false;
         }
 
-        $response_code = wp_remote_retrieve_response_code($response);
-        $response_body = json_decode(wp_remote_retrieve_body($response), true);
+        // if (!isset($response['status']) || $response['status'] !== 202) {
+        //     $this->api_errors[] = 'Class registration service returned error code: ' . ($response['status'] ?? 'unknown');
+        //     return false;
+        // }
 
-        if ($response_code !== 202) {
-            $this->api_errors[] = 'Class registration service returned error code: ' . $response_code;
-            return false;
-        }
-
-        return $response_body;
+        return $response;
     }
 
     /**

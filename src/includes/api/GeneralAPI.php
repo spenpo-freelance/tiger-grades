@@ -6,7 +6,6 @@ use WP_REST_Request;
 use WP_Error;
 use stdClass;
 use DateTime;
-use Spenpo\TigerGrades\API\JwtTokenManager;
 use Exception;
 use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 /**

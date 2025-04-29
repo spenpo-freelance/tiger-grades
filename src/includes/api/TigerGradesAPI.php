@@ -5,9 +5,10 @@ use WP_REST_Response;
 use WP_Error;
 use stdClass;
 use DateTime;
-use Spenpo\TigerGrades\API\JwtTokenManager;
 use Exception;
 use Spenpo\TigerGrades\Repositories\TigerClassRepository;
+use Spenpo\TigerGrades\Services\MicrosoftAuthService;
+use Spenpo\TigerGrades\Services\HttpService;
 /**
  * Handles all TigerGrades API functionality and route registration.
  * 
@@ -17,17 +18,12 @@ use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 class TigerGradesAPI {
     /** @var self|null */
     private static $instance = null;
-    private $jwt_token_manager;
-    private $graph_api_token;
-    private $msft_user_id;
+    private $graph_api_auth_service;
     private $gradebook_item_id;
     private $graph_api_url;
-    private $msft_tenant_id;
-    private $msft_client_id;
-    private $msft_client_secret;
-    private $client_credentials_url;
     private $api_errors;
     private $classRepository;
+    private $httpService;
 
     /**
      * Private constructor to prevent direct instantiation.
@@ -37,6 +33,8 @@ class TigerGradesAPI {
         $this->register_routes();
         $this->api_errors = array();
         $this->classRepository = new TigerClassRepository();
+        $this->graph_api_auth_service = new MicrosoftAuthService('tigr_graph_api');
+        $this->httpService = HttpService::getInstance();
     }
 
     /**
@@ -51,242 +49,6 @@ class TigerGradesAPI {
         return self::$instance;
     }
 
-    private function getCredentials() {
-        // Load credentials when needed
-        if (empty($this->msft_tenant_id) || empty($this->msft_client_id) || empty($this->msft_client_secret)) {
-            # error_log("TigerGrades API Debug: Loading environment variables");
-            $this->msft_tenant_id = getenv('MSFT_TENANT_ID');
-            $this->msft_client_id = getenv('MSFT_CLIENT_ID');
-            $this->msft_client_secret = getenv('MSFT_CLIENT_SECRET');
-
-            # error_log("TigerGrades API Debug: MSFT_TENANT_ID = " . ($this->msft_tenant_id ? 'set' : 'not set'));
-            # error_log("TigerGrades API Debug: MSFT_CLIENT_ID = " . ($this->msft_client_id ? 'set' : 'not set'));
-            # error_log("TigerGrades API Debug: MSFT_CLIENT_SECRET = " . ($this->msft_client_secret ? 'set' : 'not set'));
-
-            if (empty($this->msft_tenant_id) || empty($this->msft_client_id) || empty($this->msft_client_secret)) {
-                throw new Exception("Required Microsoft Graph API credentials are not set");
-            }
-        }
-
-        return [
-            'tenant_id' => $this->msft_tenant_id,
-            'client_id' => $this->msft_client_id,
-            'client_secret' => $this->msft_client_secret
-        ];
-    }
-
-    private function getAccessToken() {
-        try {
-            $credentials = $this->getCredentials();
-            
-            $this->client_credentials_url = "https://login.microsoftonline.com/{$credentials['tenant_id']}/oauth2/v2.0/token";
-            # error_log("TigerGrades API Debug: Attempting to access token URL: " . $this->client_credentials_url);
-
-            $ch = curl_init();
-
-            // Form data for the POST request
-            $postData = http_build_query([
-                'client_id' => $credentials['client_id'],
-                'scope' => 'https://graph.microsoft.com/.default',
-                'client_secret' => $credentials['client_secret'],
-                'grant_type' => 'client_credentials'
-            ]);
-
-            /*error_log("TigerGrades API Debug: Post data (excluding secret): " . 
-                http_build_query([
-                    'client_id' => $credentials['client_id'],
-                    'scope' => 'https://graph.microsoft.com/.default',
-                    'grant_type' => 'client_credentials'
-                ])
-            );*/
-
-            curl_setopt($ch, CURLOPT_URL, $this->client_credentials_url);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, $postData);
-            curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                'Content-Type: application/x-www-form-urlencoded'
-            ]);
-            
-            // Add verbose debugging
-            curl_setopt($ch, CURLOPT_VERBOSE, true);
-            $verbose = fopen('php://temp', 'w+');
-            curl_setopt($ch, CURLOPT_STDERR, $verbose);
-
-            $response = curl_exec($ch);
-            
-            if ($response === false) {
-                # error_log("TigerGrades API Error: Token acquisition failed - " . curl_error($ch));
-                rewind($verbose);
-                $verboseLog = stream_get_contents($verbose);
-                # error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
-                curl_close($ch);
-                return false;
-            }
-
-            $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            if ($http_code !== 200) {
-                # error_log("TigerGrades API Error: Token endpoint returned status code: $http_code");
-                # error_log("TigerGrades API Debug: Raw response: " . print_r($response, true));
-                rewind($verbose);
-                $verboseLog = stream_get_contents($verbose);
-                # error_log("TigerGrades API Debug: Curl verbose output - " . $verboseLog);
-                curl_close($ch);
-                return false;
-            }
-
-            curl_close($ch);
-
-            $data = json_decode($response);
-            
-            // Check if we got a valid token response
-            if (!isset($data->access_token) || !isset($data->expires_in)) {
-                # error_log("TigerGrades API Error: Invalid token response - " . json_encode($data));
-                return false;
-            }
-
-            $this->jwt_token_manager = new JwtTokenManager('tigr_graph_api');
-            $this->jwt_token_manager->store_token($data->access_token, $data->expires_in);
-
-            $this->msft_user_id = getenv('MSFT_USER_ID');
-
-            return true;
-        } catch (Exception $e) {
-            # error_log("TigerGrades API Error: " . $e->getMessage());
-            $this->api_errors[] = $e->getMessage();
-            return false;
-        }
-    }
-
-    /**
-     * Registers all REST API routes for TigerGrades.
-     * 
-     * @return void
-     */
-    public function register_routes() {
-        add_action('rest_api_init', function() {
-            register_rest_route('tiger-grades/v1', '/report-card', [
-                'methods' => 'GET',
-                'callback' => [$this, 'handle_report_card_request'],
-                'permission_callback' => function() {
-                    return is_user_logged_in();
-                },
-                'args' => [
-                    'sort_by' => [
-                        'required' => false,
-                        'default' => 'date',
-                        'type' => 'string',
-                        'enum' => ['date', 'type', 'name']
-                    ],
-                    'type' => [
-                        'required' => false,
-                        'default' => 'all',
-                        'type' => 'string'
-                    ],
-                    'enrollment_id' => [
-                        'required' => false,
-                        'default' => 'english',
-                        'type' => 'string'
-                    ],
-                    'is_teacher' => [
-                        'required' => false,
-                        'default' => false,
-                        'type' => 'boolean'
-                    ]
-                ]
-            ]);
-            
-            register_rest_route('tiger-grades/v1', '/class-metadata', [
-                'methods' => 'GET',
-                'callback' => [$this, 'handle_class_metadata_request'],
-                'permission_callback' => function() {
-                    return is_user_logged_in();
-                },
-                'args' => [
-                    'type' => [
-                        'required' => true,
-                        'type' => 'string'
-                    ],
-                    'enrollment_id' => [
-                        'required' => true,
-                        'default' => 'english',
-                        'type' => 'string'
-                    ],
-                    'is_teacher' => [
-                        'required' => false,
-                        'default' => false,
-                        'type' => 'boolean'
-                    ]
-                ]
-            ]);
-            
-            register_rest_route('tiger-grades/v1', '/students', [
-                'methods' => 'GET',
-                'callback' => [$this, 'handle_students_request'],
-                'permission_callback' => function() {
-                    $user = wp_get_current_user();
-                    $can_access = is_user_logged_in() && in_array('teacher', (array) $user->roles);
-                    return $can_access;
-                },
-            ]);
-        });
-    }
-
-    /**
-     * Handles the report card REST API request.
-     * 
-     * @param \WP_REST_Request $request The request object
-     * @return \WP_REST_Response The response object
-     */
-    public function handle_students_request($request) {
-        $class_id = $request->get_param('class_id');
-        
-        $status = 200;
-
-        $data = $this->fetchStudents($class_id);
-        
-        if (is_wp_error($data)) {
-            $status = $data->get_error_data()['status'] ?? 500;
-        }
-        
-        return new WP_REST_Response($data, $status);
-    }
-
-    /**
-     * Handles the report card REST API request.
-     * 
-     * @param \WP_REST_Request $request The request object
-     * @return \WP_REST_Response The response object
-     */
-    public function handle_class_metadata_request($request) {
-        $type = $request->get_param('type');
-        $enrollment_id = $request->get_param('enrollment_id');
-        $is_teacher = $request->get_param('is_teacher');
-
-        $data = $this->fetchClassMetadata($type, $enrollment_id, $is_teacher);
-        
-        return new WP_REST_Response($data, 200);
-    }
-
-    /**
-     * Handles the report card REST API request.
-     * 
-     * @param \WP_REST_Request $request The request object
-     * @return \WP_REST_Response The response object
-     */
-    public function handle_report_card_request($request) {
-        $user_id = get_current_user_id();
-        $sort_by = $request->get_param('sort_by');
-        $type = $request->get_param('type');
-        $enrollment_id = $request->get_param('enrollment_id');
-        $is_teacher = $request->get_param('is_teacher');
-
-        $data = $this->fetchReportCard($user_id, $enrollment_id, $sort_by, $type, $is_teacher);
-        
-        return new WP_REST_Response($data, 200);
-    }
-
     /**
      * Fetches and formats all report card data from the repository.
      * 
@@ -295,56 +57,30 @@ class TigerGradesAPI {
      * @return array JSON object with the class metadata
      */
     public function fetchStudents($class_id) {
-        if (!$this->getAccessToken()) {
+        if (!$this->graph_api_auth_service->getAccessToken()) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
 
         $gradebook_id = $this->classRepository->getGradebookId($class_id);
         error_log("TigerGrades API Debug: Gradebook item ID: " . $gradebook_id);
-        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$gradebook_id}/workbook/worksheets";
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->graph_api_auth_service->getMsftUserId()}/drive/items/{$gradebook_id}/workbook/worksheets";
         error_log("TigerGrades API Debug: Graph API URL: " . $this->graph_api_url);
 
-        $access_token = $this->jwt_token_manager->get_token();
+        $access_token = $this->graph_api_auth_service->getToken();
 
         $url = "{$this->graph_api_url}/grades/usedRange";
 
-        $ch = curl_init();
+        $headers = [
+            'Authorization' => "Bearer {$access_token}"
+        ];
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Authorization: Bearer {$access_token}"
-            // "Range: bytes=0-1048576"  // 1MB chunk size
-        ]);
-
-        $response = curl_exec($ch);
-        
-        // Add error handling for curl execution
-        if ($response === false) {
-            # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
-            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API', ['status' => 500]);
-        }
-
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($http_code !== 200) {
-            # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
-            return new WP_Error('api_error', $response, ['status' => $http_code]);
-        }
-
-        curl_close($ch);
-
-        $data = json_decode($response);
-        
-        // Check for JSON decode errors
-        if ($data === null) {
-            # error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
-            return new WP_Error('json_error', 'Failed to parse API response');
+        $data = $this->httpService->getJson($url, $headers);
+        if (is_wp_error($data)) {
+            return $data;
         }
 
         // Validate expected data structure
         if (!isset($data->text) || !is_array($data->text)) {
-            # error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
             return new WP_Error('data_error', 'Invalid data structure in API response');
         }
 
@@ -380,7 +116,7 @@ class TigerGradesAPI {
      * //////////////////////////////////////////////
      */
     public function fetchClassMetadata($type, $enrollment_id, $is_teacher = false) {
-        if (!$this->getAccessToken()) {
+        if (!$this->graph_api_auth_service->getAccessToken()) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
 
@@ -392,48 +128,23 @@ class TigerGradesAPI {
         }
         $this->gradebook_item_id = $class->gradebook_id;
         # error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
-        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->graph_api_auth_service->getMsftUserId()}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
-        $access_token = $this->jwt_token_manager->get_token();
+        $access_token = $this->graph_api_auth_service->getToken();
 
         $url = "{$this->graph_api_url}/categories/usedRange";
 
-        $ch = curl_init();
+        $headers = [
+            'Authorization' => "Bearer {$access_token}"
+        ];
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Authorization: Bearer {$access_token}"
-        ]);
-
-        $response = curl_exec($ch);
-        
-        // Add error handling for curl execution
-        if ($response === false) {
-            # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
-            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
-        }
-
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($http_code !== 200) {
-            # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
-            return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
-        }
-
-        curl_close($ch);
-
-        $data = json_decode($response);
-        
-        // Check for JSON decode errors
-        if ($data === null) {
-            # error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
-            return new WP_Error('json_error', 'Failed to parse API response');
+        $data = $this->httpService->getJson($url, $headers);
+        if (is_wp_error($data)) {
+            return $data;
         }
 
         // Validate expected data structure
         if (!isset($data->text) || !is_array($data->text)) {
-            # error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
             return new WP_Error('data_error', 'Invalid data structure in API response');
         }
 
@@ -443,42 +154,17 @@ class TigerGradesAPI {
     }
 
     private function fetchDataWithCurl($url, $access_token) {
-        $ch = curl_init();
+        $headers = [
+            'Authorization' => "Bearer {$access_token}"
+        ];
 
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Authorization: Bearer {$access_token}"
-        ]);
-
-        $response = curl_exec($ch);
-        
-        // Add error handling for curl execution
-        if ($response === false) {
-            # error_log("TigerGrades API Error: CURL failed - " . curl_error($ch));
-            return new WP_Error('api_error', 'Failed to fetch data from Microsoft Graph API');
-        }
-
-        $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        if ($http_code !== 200) {
-            # error_log("TigerGrades API Error: Unexpected HTTP code $http_code - Response: " . $response);
-            return new WP_Error('api_error', "Microsoft Graph API returned status code: $http_code");
-        }
-
-        curl_close($ch);
-
-        $data = json_decode($response);
-        
-        // Check for JSON decode errors
-        if ($data === null) {
-            # error_log("TigerGrades API Error: Failed to decode JSON response - " . json_last_error_msg());
-            return new WP_Error('json_error', 'Failed to parse API response');
+        $data = $this->httpService->getJson($url, $headers);
+        if (is_wp_error($data)) {
+            return $data;
         }
 
         // Validate expected data structure
         if (!isset($data->text) || !is_array($data->text)) {
-            # error_log("TigerGrades API Error: Unexpected data structure - Missing or invalid 'text' property");
             return new WP_Error('data_error', 'Invalid data structure in API response');
         }
 
@@ -499,7 +185,7 @@ class TigerGradesAPI {
      * //////////////////////////////////////////////
      */
     public function fetchReportCard($user_id, $enrollment_id, $sort_by = 'date', $type = 'all', $is_teacher = false) {
-        if (!$this->getAccessToken()) {
+        if (!$this->graph_api_auth_service->getAccessToken()) {
             return new WP_Error('api_error', 'Failed to acquire access token');
         }
 
@@ -511,9 +197,9 @@ class TigerGradesAPI {
         }
         $this->gradebook_item_id = $class->gradebook_id;
         error_log("TigerGrades API Debug: Gradebook item ID: " . $this->gradebook_item_id);
-        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->msft_user_id}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
+        $this->graph_api_url = "https://graph.microsoft.com/v1.0/users/{$this->graph_api_auth_service->getMsftUserId()}/drive/items/{$this->gradebook_item_id}/workbook/worksheets";
 
-        $access_token = $this->jwt_token_manager->get_token();
+        $access_token = $this->graph_api_auth_service->getToken();
 
         $grades_url = "{$this->graph_api_url}/grades/usedRange";
         $averages_url = "{$this->graph_api_url}/averages/usedRange";
@@ -696,5 +382,133 @@ class TigerGradesAPI {
         }
         
         return $return;
+    }
+
+    /**
+     * Registers all REST API routes for TigerGrades.
+     * 
+     * @return void
+     */
+    public function register_routes() {
+        add_action('rest_api_init', function() {
+            register_rest_route('tiger-grades/v1', '/report-card', [
+                'methods' => 'GET',
+                'callback' => [$this, 'handle_report_card_request'],
+                'permission_callback' => function() {
+                    return is_user_logged_in();
+                },
+                'args' => [
+                    'sort_by' => [
+                        'required' => false,
+                        'default' => 'date',
+                        'type' => 'string',
+                        'enum' => ['date', 'type', 'name']
+                    ],
+                    'type' => [
+                        'required' => false,
+                        'default' => 'all',
+                        'type' => 'string'
+                    ],
+                    'enrollment_id' => [
+                        'required' => false,
+                        'default' => 'english',
+                        'type' => 'string'
+                    ],
+                    'is_teacher' => [
+                        'required' => false,
+                        'default' => false,
+                        'type' => 'boolean'
+                    ]
+                ]
+            ]);
+            
+            register_rest_route('tiger-grades/v1', '/class-metadata', [
+                'methods' => 'GET',
+                'callback' => [$this, 'handle_class_metadata_request'],
+                'permission_callback' => function() {
+                    return is_user_logged_in();
+                },
+                'args' => [
+                    'type' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ],
+                    'enrollment_id' => [
+                        'required' => true,
+                        'default' => 'english',
+                        'type' => 'string'
+                    ],
+                    'is_teacher' => [
+                        'required' => false,
+                        'default' => false,
+                        'type' => 'boolean'
+                    ]
+                ]
+            ]);
+            
+            register_rest_route('tiger-grades/v1', '/students', [
+                'methods' => 'GET',
+                'callback' => [$this, 'handle_students_request'],
+                'permission_callback' => function() {
+                    $user = wp_get_current_user();
+                    $can_access = is_user_logged_in() && in_array('teacher', (array) $user->roles);
+                    return $can_access;
+                },
+            ]);
+        });
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
+    public function handle_students_request($request) {
+        $class_id = $request->get_param('class_id');
+        
+        $status = 200;
+
+        $data = $this->fetchStudents($class_id);
+        
+        if (is_wp_error($data)) {
+            $status = $data->get_error_data()['status'] ?? 500;
+        }
+        
+        return new WP_REST_Response($data, $status);
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
+    public function handle_class_metadata_request($request) {
+        $type = $request->get_param('type');
+        $enrollment_id = $request->get_param('enrollment_id');
+        $is_teacher = $request->get_param('is_teacher');
+
+        $data = $this->fetchClassMetadata($type, $enrollment_id, $is_teacher);
+        
+        return new WP_REST_Response($data, 200);
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
+    public function handle_report_card_request($request) {
+        $user_id = get_current_user_id();
+        $sort_by = $request->get_param('sort_by');
+        $type = $request->get_param('type');
+        $enrollment_id = $request->get_param('enrollment_id');
+        $is_teacher = $request->get_param('is_teacher');
+
+        $data = $this->fetchReportCard($user_id, $enrollment_id, $sort_by, $type, $is_teacher);
+        
+        return new WP_REST_Response($data, 200);
     }
 }

@@ -1,5 +1,5 @@
 <?php
-namespace Spenpo\TigerGrades\API;
+namespace Spenpo\TigerGrades\Services;
 class JwtTokenManager {
     private $encryption_key;
     private $token_prefix;

@@ -2,3 +2,4 @@
 bench
 /*.sql*
 setup-dev.sh
+scripts/*.php

@@ -1,0 +1,3 @@
+kind: Changed
+body: separated http service for external request handling
+time: 2025-04-29T13:37:03.276792+08:00
