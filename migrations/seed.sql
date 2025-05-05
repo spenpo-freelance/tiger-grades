@@ -4,4 +4,4 @@ CREATE TABLE IF NOT EXISTS `wp_tigr_migrations` (
 );
 
 INSERT INTO `wp_tigr_migrations` (`name`) VALUES
-('seed');
+('seed.sql');
