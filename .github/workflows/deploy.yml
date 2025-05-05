@@ -26,7 +26,7 @@ jobs:
             echo "INSTALLATION_PATH=${{ secrets.TIGER_GRADES_PATH }}/${{ github.ref_name }}" >> $GITHUB_ENV
           fi
 
-      - name: Deploy via Rsync
+      - name: Deploy code via rsync
         uses: burnett01/rsync-deployments@5.2.1
         with:
           switches: -avzr --delete
@@ -36,6 +36,15 @@ jobs:
           remote_user: ${{ secrets.HOSTINGER_USERNAME }}
           remote_key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
           remote_port: ${{ secrets.HOSTINGER_PORT }}
+
+      - name: Deploy migrations
+        uses: ./.github/actions/migrations
+        with:
+          path: ${{ env.DEPLOY_PATH }}
+          host: ${{ secrets.HOSTINGER_HOST }}
+          username: ${{ secrets.HOSTINGER_USERNAME }}
+          key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+          port: ${{ secrets.HOSTINGER_PORT }}
 
       - name: Clear Cache
         uses: appleboy/ssh-action@v0.1.8

@@ -1,0 +1,87 @@
+name: "Migrations Manager"
+description: "Check for new migrations and run them"
+inputs:
+  path:
+    description: "Path to WordPress installation"
+    required: true
+  host:
+    description: "Hosting provider host"
+    required: true
+  username:
+    description: "Hosting provider username"
+    required: true
+  key:
+    description: "Hosting provider private key"
+    required: true
+  port:
+    description: "Hosting provider port"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Deploy migrations via rsync
+      uses: burnett01/rsync-deployments@5.2.1
+      with:
+        switches: -avzr --delete
+        path: migrations/
+        remote_path: ${{ inputs.path }}/migrations/
+        remote_host: ${{ inputs.host }}
+        remote_user: ${{ inputs.username }}
+        remote_key: ${{ inputs.key }}
+        remote_port: ${{ inputs.port }}
+
+    - name: Check if migrations table exists
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ inputs.host }}
+        username: ${{ inputs.username }}
+        key: ${{ inputs.key }}
+        port: ${{ inputs.port }}
+        script: |
+          echo "Checking if migrations table exists"
+          cd ${{ inputs.path }}
+          migrations_table_exists=$(wp db query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'wp_tigr_migrations'" --path=${{ inputs.path }} --skip-column-names)
+          if [ "$migrations_table_exists" -eq "0" ]; then
+            echo "Migrations table does not exist, creating it"
+            wp db import migrations/seed.sql --path=${{ inputs.path }}
+            echo "Migrations table created"
+          else
+            echo "Migrations table exists"
+          fi
+
+    - name: Run migrations
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ inputs.host }}
+        username: ${{ inputs.username }}
+        key: ${{ inputs.key }}
+        port: ${{ inputs.port }}
+        script: |
+          echo "Running migrations"
+          cd ${{ inputs.path }}
+          # Get a list of all migration files
+          shopt -s nullglob
+          all_migrations=(./migrations/*.sql)
+          
+          # Process each migration file
+          for migration in "${all_migrations[@]}"; do
+            # Get the migration name (filename)
+            migration_name=$(basename "$migration")
+            
+            # Check if migration has been applied
+            applied=$(wp db query "SELECT COUNT(*) FROM wp_tigr_migrations WHERE name='$migration_name'" --path=${{ inputs.path }} --skip-column-names)
+            
+            if [ "$applied" -eq "0" ]; then
+              echo "Running migration: $migration_name"
+              
+              # Run the migration
+              wp db query < "$migration" --path=${{ inputs.path }}
+              
+              # Record that we've run this migration
+              wp db query "INSERT INTO wp_tigr_migrations (name) VALUES ('$migration_name')" --path=${{ inputs.path }}
+              
+              echo "Migration completed: $migration_name"
+            else
+              echo "Skipping already applied migration: $migration_name"
+            fi
+          done
