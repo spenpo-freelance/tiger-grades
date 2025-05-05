@@ -1,0 +1,3 @@
+kind: Fixed
+body: use bash extraction instead of basename to get migration primary key in deploy workflow
+time: 2025-05-05T10:17:27.129504+08:00

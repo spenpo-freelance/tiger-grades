@@ -65,8 +65,8 @@ runs:
           
           # Process each migration file
           for migration in "${all_migrations[@]}"; do
-            # Get the migration name (filename)
-            migration_name=$(basename "$migration")
+            # Get the migration name (filename without path)
+            migration_name="${migration##*/}"
             
             # Check if migration has been applied
             applied=$(wp db query "SELECT COUNT(*) FROM wp_tigr_migrations WHERE name='$migration_name'" --path=${{ inputs.path }} --skip-column-names)
