@@ -40,7 +40,7 @@ jobs:
       - name: Deploy migrations
         uses: ./.github/actions/migrations
         with:
-          path: ${{ env.DEPLOY_PATH }}
+          path: ${{ env.INSTALLATION_PATH }}
           host: ${{ secrets.HOSTINGER_HOST }}
           username: ${{ secrets.HOSTINGER_USERNAME }}
           key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}

@@ -1,0 +1,3 @@
+kind: Changed
+body: swap deploy path with installation path for migrations step in deploy workflow
+time: 2025-05-05T09:59:27.213964+08:00
