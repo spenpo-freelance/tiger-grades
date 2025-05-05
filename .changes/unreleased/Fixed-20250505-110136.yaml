@@ -1,0 +1,3 @@
+kind: Fixed
+body: temporarily changed delimiter in migration that creates triggers;
+time: 2025-05-05T11:01:36.837873+08:00
