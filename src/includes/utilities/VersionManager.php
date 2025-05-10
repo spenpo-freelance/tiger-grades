@@ -26,33 +26,9 @@ class VersionManager {
      */
     public function checkAndSyncVersion() {
         if (self::needsUpdate()) {
-            // Only update the database if we're in the admin area
-            // This prevents unnecessary database operations on frontend requests
-            if (is_admin()) {
-                // Run the database update
-                $this->updateDatabase();
-            }
-            
             // Always sync the version
             self::syncWithPluginVersion();
         }
-    }
-    
-    /**
-     * Update the database schema if needed
-     */
-    private function updateDatabase() {
-        // Get the path to the seed.sql file
-        $script_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'data/seed.sql';
-        
-        // Use the DatabaseManager to execute the script
-        // We need to include the DatabaseManager if it's not already included
-        if (!class_exists('\\Spenpo\\TigerGrades\\Repositories\\DatabaseManager')) {
-            require_once plugin_dir_path(dirname(__FILE__)) . 'repositories/DatabaseManager.php';
-        }
-        
-        // Execute the database script
-        \Spenpo\TigerGrades\Repositories\DatabaseManager::executeScript($script_path, 'init');
     }
     
     /**

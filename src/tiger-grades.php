@@ -2,10 +2,10 @@
 /**
  * Plugin Name:       Tiger Grades
  * Plugin URI:        https://github.com/spenpo-freelance/tiger-grades
- * Description:       grades for your students
- * Requires at least: 6.6
+ * Description:       Education intelligence for teachers, parents and teaching organizations
+ * Requires at least: 6.8
  * Requires PHP:      7.2
- * Version:           0.0.5
+ * Version:           0.1.0
  * Author:            spenpo
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,19 +52,20 @@ require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Registration.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/RewriteManager.php';
 
-// Register activation hook with full namespace
-register_activation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseManager', 'createDatabase']);
-
-// Register deactivation hook with full namespace
-register_deactivation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseManager', 'teardownDatabase']);
-
 // Register styles
 function enqueue_tiger_grades_styles() {
     wp_enqueue_style(
         'tiger-grades-styles',
-        plugins_url('style.css', __FILE__),
+        plugins_url('css/styles.css', __FILE__),
         array(),
         '1.0.6'
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_styles');
+
+// Temporarily disable toolbar for teachers
+add_action('after_setup_theme', function () {
+    if (current_user_can('teacher') && !is_admin()) {
+        show_admin_bar(false);
+    }
+});
