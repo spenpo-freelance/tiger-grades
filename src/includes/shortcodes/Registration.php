@@ -3,7 +3,6 @@ namespace Spenpo\TigerGrades\Shortcodes;
 
 use Spenpo\TigerGrades\Utilities\DOMHelper;
 use DOMDocument;
-use Spenpo\TigerGrades\API\GeneralAPI;
 /**
  * Handles the [tigr_version] shortcode functionality.
  * 
@@ -12,12 +11,10 @@ use Spenpo\TigerGrades\API\GeneralAPI;
  */
 class RegistrationShortcode {
     private $text_translations;
-    private $api;
     /**
      * Constructor initializes and registers the shortcode.
      */
     public function __construct() {
-        $this->api = $this->getAPI();
         // Register the shortcode
         add_shortcode('tigr_registration', [$this, 'render']);
     }
@@ -66,7 +63,7 @@ class RegistrationShortcode {
             'tiger-grades-user-registration',
             plugins_url('tiger-grades/js/user-registration.js', dirname(__FILE__, 3)),
             array('jquery'),
-            '1.0.1',
+            '1.0.2',
             true
         );
         wp_localize_script(
@@ -81,11 +78,6 @@ class RegistrationShortcode {
         );
         
         return $dom->saveHTML();
-    }
-
-    // New protected method for better testability
-    protected function getAPI() {
-        return GeneralAPI::getInstance();
     }
 }
 
