@@ -1,0 +1,3 @@
+kind: Changed
+body: report card endpoint throws 500 when the callback doesn't work. UI displays error message
+time: 2025-05-10T19:32:29.84142+08:00
