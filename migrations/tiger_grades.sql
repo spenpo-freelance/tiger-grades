@@ -22,7 +22,7 @@ DROP TABLE IF EXISTS `wp_tigr_class_types`;
 -- Create tables in correct order
 -- First create tables without foreign keys
 CREATE TABLE `wp_tigr_range_options` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `label` varchar(45) NOT NULL,
   `min` int(11) NOT NULL DEFAULT 0,
   `max` int(11) DEFAULT NULL,
@@ -30,13 +30,13 @@ CREATE TABLE `wp_tigr_range_options` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_class_types` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `title` varchar(45) NOT NULL,
   `image` bigint(19) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_feature_lookup` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `title` varchar(45) NOT NULL,
   `description` varchar(255) NOT NULL,
   `status` varchar(45) NOT NULL DEFAULT 'active',
@@ -45,7 +45,7 @@ CREATE TABLE `wp_tigr_feature_lookup` (
 
 -- Then create tables with foreign keys
 CREATE TABLE `wp_tigr_classes` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `teacher` bigint(19) UNSIGNED NOT NULL,
   `title` varchar(45) NOT NULL,
   `gradebook_id` varchar(45) DEFAULT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE `wp_tigr_classes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_enrollments` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `class_id` bigint(19) UNSIGNED NOT NULL,
   `user_id` bigint(19) UNSIGNED NOT NULL,
   `student_name` varchar(45) NOT NULL,
