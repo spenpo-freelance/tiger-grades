@@ -52,6 +52,24 @@ require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Registration.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/RewriteManager.php';
 
+// Enqueue scripts
+function enqueue_tiger_grades_scripts() {
+    // Only enqueue the hCaptcha script if we're on a relevant User Registration page
+    if (is_ur_login_page() || 
+        is_ur_account_page() || 
+        is_ur_edit_account_page() || 
+        is_ur_lost_password_page()) {
+        wp_enqueue_script(
+            'tiger-grades-hcaptcha',
+            TIGER_GRADES_URL . 'js/hcaptcha-size.js',
+            array(),
+            '1.0.0',
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_scripts');
+
 // Register styles
 function enqueue_tiger_grades_styles() {
     wp_enqueue_style(
@@ -62,10 +80,3 @@ function enqueue_tiger_grades_styles() {
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_styles');
-
-// Temporarily disable toolbar for teachers
-add_action('after_setup_theme', function () {
-    if (current_user_can('teacher') && !is_admin()) {
-        show_admin_bar(false);
-    }
-});
