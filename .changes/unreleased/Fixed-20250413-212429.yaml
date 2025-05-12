@@ -1,3 +1,0 @@
-kind: Fixed
-body: add end_date to getEnrolledClasses to fix bug where all classes go to past_classes for parents
-time: 2025-04-13T21:24:29.734911+08:00

@@ -1,3 +1,0 @@
-kind: Fixed
-body: changed seed migration name to seed.sql. full file name will be used for all migration names
-time: 2025-05-05T10:30:33.089443+08:00

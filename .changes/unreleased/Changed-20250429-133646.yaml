@@ -1,3 +1,0 @@
-kind: Changed
-body: separated microsoft auth service for bearer token handling
-time: 2025-04-29T13:36:46.790767+08:00

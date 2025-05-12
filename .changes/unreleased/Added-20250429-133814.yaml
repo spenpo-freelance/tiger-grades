@@ -1,3 +1,0 @@
-kind: Added
-body: security manager with generic permission_callback for checking if a user has permission to access a feature
-time: 2025-04-29T13:38:14.423271+08:00
