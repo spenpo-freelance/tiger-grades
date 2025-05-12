@@ -2,10 +2,10 @@
 /**
  * Plugin Name:       Tiger Grades
  * Plugin URI:        https://github.com/spenpo-freelance/tiger-grades
- * Description:       grades for your students
- * Requires at least: 6.6
+ * Description:       Education intelligence for teachers, parents and teaching organizations
+ * Requires at least: 6.8
  * Requires PHP:      7.2
- * Version:           0.0.5
+ * Version:           0.1.0
  * Author:            spenpo
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -52,17 +52,29 @@ require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Registration.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/RewriteManager.php';
 
-// Register activation hook with full namespace
-register_activation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseManager', 'createDatabase']);
-
-// Register deactivation hook with full namespace
-register_deactivation_hook(__FILE__, ['Spenpo\TigerGrades\Repositories\DatabaseManager', 'teardownDatabase']);
+// Enqueue scripts
+function enqueue_tiger_grades_scripts() {
+    // Only enqueue the hCaptcha script if we're on a relevant User Registration page
+    if (is_ur_login_page() || 
+        is_ur_account_page() || 
+        is_ur_edit_account_page() || 
+        is_ur_lost_password_page()) {
+        wp_enqueue_script(
+            'tiger-grades-hcaptcha',
+            TIGER_GRADES_URL . 'js/hcaptcha-size.js',
+            array(),
+            '1.0.0',
+            true
+        );
+    }
+}
+add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_scripts');
 
 // Register styles
 function enqueue_tiger_grades_styles() {
     wp_enqueue_style(
         'tiger-grades-styles',
-        plugins_url('style.css', __FILE__),
+        plugins_url('css/styles.css', __FILE__),
         array(),
         '1.0.6'
     );

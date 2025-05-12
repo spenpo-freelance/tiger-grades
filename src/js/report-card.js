@@ -229,7 +229,7 @@ jQuery(document).ready(function($) {
             }
         },
         error: function(xhr, status, error) {
-            reportCard.html('<div class="error-message">Error loading report card. Please try again later.</div>');
+            reportCard.html('<div class="error-message">Woops! This class is broken. You might be in the wrong place. Please try navigating to your class from the <a href="/grades">grades page</a>.</div>');
         }
     });
 

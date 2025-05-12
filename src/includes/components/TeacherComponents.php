@@ -51,6 +51,11 @@ class TeacherComponents {
             '6.4.0'
         );
 
+        // Enqueue Dashicons
+        wp_enqueue_style(
+            'dashicons'
+        );
+
         wp_enqueue_script(
             'tiger-grades-enrollment-code',
             plugins_url('tiger-grades/js/enrollment-code.js', dirname(__FILE__, 3)),

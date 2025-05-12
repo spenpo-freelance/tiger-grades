@@ -7,8 +7,6 @@
  */
 namespace Spenpo\TigerGrades\Repositories;
 
-use Spenpo\TigerGrades\Utilities\VersionManager;
-
 class DatabaseManager {
     protected static function requireUpgradeFile() {
         require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -135,48 +133,6 @@ class DatabaseManager {
             }
         } else {
             echo 'Failed to initialize WP_Filesystem.';
-        }
-    }
-
-    /**
-     * Creates or updates the database schema.
-     * 
-     * @return void
-     */
-    public static function createDatabase() {
-        // Always recreate database in debug/development environment
-        if (defined('WP_DEBUG') && WP_DEBUG || VersionManager::needsUpdate()) {
-            // New absolute path using plugin root directory
-            $script_path = plugin_dir_path(dirname(dirname(__FILE__))) . 'data/seed.sql';
-            
-            $result = self::executeScript($script_path, 'init');
-            
-            if ($result['success']) {
-                VersionManager::syncWithPluginVersion();
-            }
-        }
-    }
-
-    /**
-     * Creates or updates the database schema.
-     * 
-     * @return void
-     */
-    public static function createTestDatabase() {
-        $script_path = plugin_dir_path(dirname(__FILE__)) . '../data/test-schema.sql';
-        self::executeScript($script_path, 'init');
-    }
-
-    /**
-     * Removes all plugin tables from the database.
-     * 
-     * @return void
-     */
-    public static function teardownDatabase() {
-        $script_path = plugin_dir_path(dirname(__FILE__)) . '../data/teardown.sql';
-        $result = self::executeScript($script_path, 'query');
-        if ($result['success']) {
-            delete_option('tigr_db_version');
         }
     }
 } 

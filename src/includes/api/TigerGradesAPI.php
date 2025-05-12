@@ -509,6 +509,11 @@ class TigerGradesAPI {
 
         $data = $this->fetchReportCard($user_id, $enrollment_id, $sort_by, $type, $is_teacher);
         
+        if (is_wp_error($data)) {
+            $status = $data->get_error_data()['status'] ?? 500;
+            return new WP_REST_Response($data, $status);
+        }
+        
         return new WP_REST_Response($data, 200);
     }
 }

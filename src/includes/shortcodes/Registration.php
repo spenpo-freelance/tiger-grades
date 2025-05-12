@@ -66,14 +66,13 @@ class RegistrationShortcode {
             'tiger-grades-user-registration',
             plugins_url('tiger-grades/js/user-registration.js', dirname(__FILE__, 3)),
             array('jquery'),
-            '1.0.1',
+            '1.0.2',
             true
         );
         wp_localize_script(
             'tiger-grades-user-registration',
             'tigr_ajax_object',
             array(
-                'hcaptcha_site_key' => get_option('tigr_hcaptcha_site_key'),
                 'teacher_form_id' => get_option('tigr_ur_teacher_form_id'),
                 'user_form_id' => get_option('tigr_ur_user_form_id'),
                 'ajax_url' => rest_url('tiger-grades/v1/shortcode')

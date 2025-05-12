@@ -22,30 +22,36 @@ DROP TABLE IF EXISTS `wp_tigr_class_types`;
 -- Create tables in correct order
 -- First create tables without foreign keys
 CREATE TABLE `wp_tigr_range_options` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `label` varchar(45) NOT NULL,
   `min` int(11) NOT NULL DEFAULT 0,
   `max` int(11) DEFAULT NULL,
-  `status` varchar(45) NOT NULL DEFAULT 'active'
+  `status` varchar(45) NOT NULL DEFAULT 'active',
+  PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_class_types` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `title` varchar(45) NOT NULL,
-  `image` bigint(19) UNSIGNED NOT NULL
+  `image` bigint(19) UNSIGNED NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `title_UNIQUE` (`title`),
+  KEY `image_post_ID_idx` (`image`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_feature_lookup` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `title` varchar(45) NOT NULL,
   `description` varchar(255) NOT NULL,
   `status` varchar(45) NOT NULL DEFAULT 'active',
-  `parent_feature` bigint(19) UNSIGNED DEFAULT NULL
+  `parent_feature` bigint(19) UNSIGNED DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `parent_feature_idx` (`parent_feature`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Then create tables with foreign keys
 CREATE TABLE `wp_tigr_classes` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `teacher` bigint(19) UNSIGNED NOT NULL,
   `title` varchar(45) NOT NULL,
   `gradebook_id` varchar(45) DEFAULT NULL,
@@ -61,11 +67,18 @@ CREATE TABLE `wp_tigr_classes` (
   `message` varchar(512) DEFAULT NULL,
   `start_date` datetime NOT NULL,
   `end_date` datetime NOT NULL,
-  `gradebook_file_name` varchar(128) NOT NULL
+  `gradebook_file_name` varchar(128) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `gradebook_id_UNIQUE` (`gradebook_id`),
+  UNIQUE KEY `enrollment_code_UNIQUE` (`enrollment_code`),
+  KEY `wp_users_ID_idx` (`teacher`),
+  KEY `num_students_idx` (`num_students`),
+  KEY `num_categories_idx` (`num_categories`),
+  KEY `class_type_idx` (`type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_enrollments` (
-  `id` bigint(19) UNSIGNED NOT NULL,
+  `id` bigint(19) UNSIGNED NOT NULL AUTO_INCREMENT,
   `class_id` bigint(19) UNSIGNED NOT NULL,
   `user_id` bigint(19) UNSIGNED NOT NULL,
   `student_name` varchar(45) NOT NULL,
@@ -73,54 +86,26 @@ CREATE TABLE `wp_tigr_enrollments` (
   `status` varchar(45) NOT NULL DEFAULT 'pending',
   `student_id` int(11) DEFAULT NULL,
   `created` datetime NOT NULL DEFAULT current_timestamp(),
-  `updated` datetime NOT NULL DEFAULT current_timestamp()
+  `updated` datetime NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `id_UNIQUE` (`id`),
+  KEY `wp_users_ID_idx` (`user_id`),
+  KEY `wp_tigr_classes_id_idx` (`class_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_feature_range_options_junction` (
   `range_option_id` bigint(19) UNSIGNED NOT NULL,
-  `feature_lookup_id` bigint(19) UNSIGNED NOT NULL
+  `feature_lookup_id` bigint(19) UNSIGNED NOT NULL,
+  KEY `range_option_id_idx` (`range_option_id`),
+  KEY `feature_lookup_id_idx` (`feature_lookup_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `wp_tigr_secured_routes_junction` (
   `user_id` bigint(20) UNSIGNED NOT NULL,
-  `feature_lookup_id` bigint(20) UNSIGNED NOT NULL
+  `feature_lookup_id` bigint(20) UNSIGNED NOT NULL,
+  KEY `user_id_idx` (`user_id`),
+  KEY `feature_lookup_id_idx` (`feature_lookup_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Add indexes and constraints
-ALTER TABLE `wp_tigr_range_options`
-  ADD PRIMARY KEY (`id`);
-
-ALTER TABLE `wp_tigr_class_types`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `title_UNIQUE` (`title`),
-  ADD KEY `image_post_ID_idx` (`image`);
-
-ALTER TABLE `wp_tigr_feature_lookup`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `parent_feature_idx` (`parent_feature`);
-
-ALTER TABLE `wp_tigr_classes`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `gradebook_id_UNIQUE` (`gradebook_id`),
-  ADD UNIQUE KEY `enrollment_code_UNIQUE` (`enrollment_code`),
-  ADD KEY `wp_users_ID_idx` (`teacher`),
-  ADD KEY `num_students_idx` (`num_students`),
-  ADD KEY `num_categories_idx` (`num_categories`),
-  ADD KEY `class_type_idx` (`type`);
-
-ALTER TABLE `wp_tigr_enrollments`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `id_UNIQUE` (`id`),
-  ADD KEY `wp_users_ID_idx` (`user_id`),
-  ADD KEY `wp_tigr_classes_id_idx` (`class_id`);
-
-ALTER TABLE `wp_tigr_feature_range_options_junction`
-  ADD KEY `range_option_id_idx` (`range_option_id`),
-  ADD KEY `feature_lookup_id_idx` (`feature_lookup_id`);
-
-ALTER TABLE `wp_tigr_secured_routes_junction`
-  ADD KEY `user_id_idx` (`user_id`),
-  ADD KEY `feature_lookup_id_idx` (`feature_lookup_id`);
 
 -- Add foreign key constraints
 ALTER TABLE `wp_tigr_feature_lookup`

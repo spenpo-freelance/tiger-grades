@@ -39,20 +39,9 @@ jQuery(document).ready(function($) {
         registrationFormContainer.html(cachedForms[formId].html);
         
         // Load the form's scripts
-        loadScripts(cachedForms[formId].scripts)
-            .then(() => {
-                console.log('All scripts loaded successfully for form:', formId);
-                // Reinitialize hCaptcha if needed
-                if (typeof hcaptcha !== 'undefined') {
-                    hcaptcha.render('ur-recaptcha-node', {
-                        sitekey: tigr_ajax_object.hcaptcha_site_key,
-                        theme: 'light'
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Error loading scripts for form:', formId, error);
-            });
+        loadScripts(cachedForms[formId].scripts).catch(error => {
+            console.error('Error loading scripts for form:', formId, error);
+        });
     }
 
     function fetchForm(formId) {
