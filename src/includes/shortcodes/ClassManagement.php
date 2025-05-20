@@ -65,7 +65,8 @@ class ClassManagementShortcode {
             $actionCell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell');
             $approveButton = DOMHelper::createElement($dom, 'button', 'approve-enrollment-btn', null, 'Approve', [
                 'data-enrollment-id' => $enrollment->id,
-                'type' => 'button'
+                'type' => 'button',
+                'disabled' => 'disabled'
             ]);
             $actionCell->appendChild($approveButton);
             $enrollment_table->appendChild($actionCell);
@@ -74,11 +75,13 @@ class ClassManagementShortcode {
         $approveDialog = DOMHelper::createElement($dom, 'dialog', 'approve-dialog', 'approveDialog');
         $approveDialog->appendChild(DOMHelper::createElement($dom, 'h2', 'approve-dialog-header', null, 'Approve Enrollment'));
         $approveDialog->appendChild(DOMHelper::createElement($dom, 'p', 'approve-dialog-description', null,'Choose a student from your gradebook to link with this parent\'s account.'));
+        $controlsContainer = DOMHelper::createElement($dom, 'div', 'approve-dialog-controls-container');
         $studentSelect = DOMHelper::createElement($dom, 'select', 'approve-dialog-student-select', null, null, ['disabled' => 'disabled']);
         $studentSelect->appendChild(DOMHelper::createElement($dom, 'option', 'approve-dialog-student-select-option', null, 'Select a student', ['selected' => 'selected', 'disabled' => 'disabled', 'value' => '']));
-        $approveDialog->appendChild($studentSelect);
-        $approveDialog->appendChild(DOMHelper::createElement($dom, 'button', 'approve-dialog-cancel', null, 'Cancel'));
-        $approveDialog->appendChild(DOMHelper::createElement($dom, 'button', 'approve-dialog-confirm', null, 'Confirm', ['disabled' => 'disabled']));
+        $controlsContainer->appendChild($studentSelect);
+        $controlsContainer->appendChild(DOMHelper::createElement($dom, 'button', 'approve-dialog-cancel', null, 'Cancel'));
+        $controlsContainer->appendChild(DOMHelper::createElement($dom, 'button', 'approve-dialog-confirm', null, 'Confirm', ['disabled' => 'disabled']));
+        $approveDialog->appendChild($controlsContainer);
         $dom->appendChild($approveDialog);
 
         $enrollment_table->appendChild($table_body);
@@ -125,7 +128,7 @@ class ClassManagementShortcode {
                     'tiger-grades-class-management',
                     plugins_url('tiger-grades/js/class-management.js', dirname(__FILE__, 3)),
                     array('jquery'),
-                    '1.0.0',
+                    '1.0.1',
                     true
                 );
     

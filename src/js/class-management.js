@@ -34,6 +34,9 @@ jQuery(document).ready(function($) {
                 }
             });
             studentSelect.disabled = false;
+            approveBtns.each(function() {
+                $(this).removeAttr('disabled');
+            });
         },
         error: function(xhr, status, error) {
             reportCard.html('<div class="error-message">Error loading report card. Please try again later.</div>');

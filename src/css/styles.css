@@ -143,7 +143,12 @@
     margin-bottom: 12px;
 }
 
-.approve-enrollment-btn {
+.approve-dialog-controls-container {
+    display: flex;
+    gap: 10px;
+}
+
+.approve-enrollment-btn, .approve-dialog-confirm {
     padding: 6px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -154,16 +159,32 @@
     transition: all 0.2s ease;
 }
 
-.approve-enrollment-btn:hover {
+.approve-enrollment-btn:hover, .approve-dialog-confirm:hover {
     background-color: #03c4eb;
     border-color: #03c4eb;
     color: #fff;
 }
 
-.approve-enrollment-btn:focus {
+.approve-enrollment-btn:focus, .approve-dialog-confirm:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
 }
+
+.approve-enrollment-btn:disabled, .approve-dialog-confirm:disabled {
+    background-color: #ddd;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.approve-dialog-student-select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+}
+
 
 dialog {
     padding: 2rem;
