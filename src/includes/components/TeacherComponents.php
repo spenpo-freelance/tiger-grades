@@ -181,15 +181,15 @@ class TeacherComponents {
                 $actionsCell->appendChild($actions_container);
                 $isActive = $class->status === 'active';
                 if ($isActive) {
-                    $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
+                    $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
                     $actions_container->appendChild($manageEnrollmentsButton);
                 }
                 if ($isActive) {
-                    $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
+                    $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
                     $actions_container->appendChild($gradesButton);
                 }
                 if ($isActive) {
-                    $viewGradebookButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button btn approve-enrollment-btn', null, 'View', ['href' => $class->gradebook_url, 'target' => '_blank', 'rel' => 'noopener noreferrer']);
+                    $viewGradebookButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button', null, 'View', ['href' => $class->gradebook_url, 'target' => '_blank', 'rel' => 'noopener noreferrer']);
                     $actions_container->appendChild($viewGradebookButton);
                 }
                 $row->appendChild($actionsCell);

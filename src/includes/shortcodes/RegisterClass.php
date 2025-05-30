@@ -205,7 +205,15 @@ class RegisterClassShortcode {
             ]));
             $create_class_form->appendChild($additional_info_container);
 
-            $create_class_form->appendChild(DOMHelper::createElement($dom, 'input', 'search-submit create-class-form-button', null, 'Register Class', ['type' => 'submit']));
+            $submit_container = DOMHelper::createElement($dom, 'div', 'form-group submit-enroll');
+            $form_submit = DOMHelper::createElement($dom, 'input', 'btn btn-theme-primary', null, null, ['type' => 'submit']);
+            $loading_small = DOMHelper::createElement($dom, 'div', 'loading-element');
+            $submit_container->appendChild($form_submit);
+            $loading_container = DOMHelper::createElement($dom, 'div', 'loading-container');
+            $loading_container->appendChild($loading_small);
+            $submit_container->appendChild($loading_container);
+            $create_class_form->appendChild($submit_container);
+            
             $root->appendChild($create_class_form);
             
             // Enqueue the JavaScript

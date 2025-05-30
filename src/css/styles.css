@@ -76,6 +76,28 @@
     animation: spin 1s linear infinite; /* Spin animation */
     margin: 20px auto;
 }
+
+.loading-small {
+    display: inline-block;
+    width: 10px; /* Adjust size as needed */
+    height: 10px;
+    border: 2px solid rgba(10, 10, 10, 0.1); /* Light border */
+    border-top-color: var(--primary); /* Darker border for the spinning effect */
+    border-radius: 50%; /* Make it circular */
+    animation: spin 1s linear infinite; /* Spin animation */
+    margin: 5px auto;
+}
+
+.loading-medium {
+    display: inline-block;
+    width: 20px; /* Adjust size as needed */
+    height: 20px;
+    border: 2px solid rgba(10, 10, 10, 0.1); /* Light border */
+    border-top-color: var(--primary); /* Darker border for the spinning effect */
+    border-radius: 50%; /* Make it circular */
+    animation: spin 1s linear infinite; /* Spin animation */
+    margin: 5px auto;
+}
   
 @keyframes spin {
     0% {
@@ -84,6 +106,12 @@
     100% {
       transform: rotate(360deg);
     }
+}
+
+p.name-in-gradebook {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
 }
 
 .breadcrumbs {
@@ -148,7 +176,16 @@
     gap: 10px;
 }
 
-.approve-enrollment-btn, .approve-dialog-confirm {
+.enrollment-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.class-manage-action-btn, .classes-table-manage-enrollments-button {
+    width: 100%;
+}
+
+.class-manage-action-btn, .approve-dialog-confirm, .view-message-btn, .classes-table-manage-enrollments-button {
     padding: 6px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -157,34 +194,56 @@
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
-.approve-enrollment-btn:hover, .approve-dialog-confirm:hover {
+.class-manage-action-btn:hover, .approve-dialog-confirm:hover, .view-message-btn:hover, .classes-table-manage-enrollments-button:hover {
     background-color: #03c4eb;
     border-color: #03c4eb;
     color: #fff;
+    text-decoration: none;
 }
 
-.approve-enrollment-btn:focus, .approve-dialog-confirm:focus {
+.class-manage-action-btn:focus, .approve-dialog-confirm:focus, .view-message-btn:focus, .classes-table-manage-enrollments-button:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
 }
 
-.approve-enrollment-btn:disabled, .approve-dialog-confirm:disabled {
+.class-manage-action-btn:disabled, .approve-dialog-confirm:disabled, .view-message-btn:disabled, .classes-table-manage-enrollments-button:disabled {
     background-color: #ddd;
     color: #666;
     cursor: not-allowed;
 }
 
+.view-message-btn {
+    align-self: flex-start;
+}
+
+.enrollment-table-cell > .flex-cell p {
+    margin: 0px;
+}
+
+.enrollment-table-cell > .flex-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
 .approve-dialog-student-select {
-    width: 100%;
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 14px;
     color: #333;
+    flex: 3;
 }
 
+.approve-dialog-confirm, .approve-dialog-cancel {
+    flex: 1;
+}
 
 dialog {
     padding: 2rem;
@@ -476,4 +535,17 @@ dialog::backdrop {
 
 .expand-past-classes-label::after {
     content: "Show past classes";
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.form-group.submit-enroll {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }

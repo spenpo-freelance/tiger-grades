@@ -51,25 +51,84 @@ class ClassManagementShortcode {
         $table_body = DOMHelper::createElement($dom, 'tbody', 'enrollment-table-body');
 
         foreach ($enrollments as $enrollment) {
-            $enrollment_table->appendChild(DOMHelper::createElement($dom, 'tr', 'enrollment-table-row'));
-            $enrollment_table->appendChild(DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null, $enrollment->student_name));
-            $enrollment_table->appendChild(DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null, $enrollment->parent_name));
-
-            $email_link = DOMHelper::createElement($dom, 'a', 'email-link', null, $enrollment->parent_email, ['href' => 'mailto:' . $enrollment->parent_email]);
-            $email_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null);
-            $email_cell->appendChild($email_link);
-            $enrollment_table->appendChild($email_cell);
-            $enrollment_table->appendChild(DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null, $enrollment->status));
+            $row = DOMHelper::createElement($dom, 'tr', 'enrollment-table-row', null, null, [
+                'data-enrollment-id' => $enrollment->id,
+                'data-student-id' => $enrollment->student_id,
+            ]);
+            $table_body->appendChild($row);
             
-            // Create action cell with button
+            // Student cell
+            $student_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null);
+            $student_flex_box = DOMHelper::createElement($dom, 'div', 'student-info flex-cell');
+            $student_name = DOMHelper::createElement($dom, 'p', 'student-name', null, "Enrolled as: $enrollment->student_name");
+            $student_flex_box->appendChild($student_name);
+            
+            $name_in_gradebook = DOMHelper::createElement($dom, 'p', 'name-in-gradebook', null, "Name in gradebook: ");
+            $gradebook_name = DOMHelper::createElement($dom, 'span', 'gradebook-name loading-small');
+            $name_in_gradebook->appendChild($gradebook_name);
+
+            if ($enrollment->status === 'approved') {
+                $student_flex_box->appendChild($name_in_gradebook);
+            }
+
+            $student_cell->appendChild($student_flex_box);
+            $row->appendChild($student_cell);
+            
+            // Parent cell
+            $parent_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null);
+            $parent_flex_box = DOMHelper::createElement($dom, 'div', 'parent-info flex-cell');
+            $parent_name = DOMHelper::createElement($dom, 'p', 'parent-name', null, $enrollment->parent_name);
+            $parent_flex_box->appendChild($parent_name);
+            $email_link = DOMHelper::createElement($dom, 'a', 'email-link', null, $enrollment->parent_email, ['href' => 'mailto:' . $enrollment->parent_email]);
+            $parent_flex_box->appendChild($email_link);
+
+            if ($enrollment->message) {
+                $view_message_btn = DOMHelper::createElement($dom, 'button', 'view-message-btn', null, 'View Message', ['disabled' => 'disabled']);
+                $parent_flex_box->appendChild($view_message_btn);
+
+                $message_dialog = DOMHelper::createElement($dom, 'dialog', 'message-dialog', 'messageDialog', null, ['data-enrollment-id' => $enrollment->id]);
+                $message_dialog->appendChild(DOMHelper::createElement($dom, 'h2', 'message-dialog-header', null, 'Message from Parent'));
+                $message_dialog->appendChild(DOMHelper::createElement($dom, 'p', 'message-dialog-message', null, $enrollment->message));
+                $message_dialog->appendChild(DOMHelper::createElement($dom, 'button', 'message-dialog-close', null, 'Close'));
+                $dom->appendChild($message_dialog);
+            }
+
+            $parent_cell->appendChild($parent_flex_box);
+            $row->appendChild($parent_cell);
+            
+            // Status cell
+            $status_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell enrollment-status', null, $enrollment->status);
+            $row->appendChild($status_cell);
+            
+            // Create action cell with buttons
             $actionCell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell');
-            $approveButton = DOMHelper::createElement($dom, 'button', 'approve-enrollment-btn', null, 'Approve', [
+            $actionsFlexBox = DOMHelper::createElement($dom, 'div', 'enrollment-actions-flex-box enrollment-actions');
+            $approveBtnText = 'Approve';
+            if ($enrollment->status === 'approved') {
+                $approveBtnText = 'Change';
+            }
+            $approveButton = DOMHelper::createElement($dom, 'button', 'class-manage-action-btn approve-enrollment-btn', null, $approveBtnText, [
                 'data-enrollment-id' => $enrollment->id,
                 'type' => 'button',
                 'disabled' => 'disabled'
             ]);
-            $actionCell->appendChild($approveButton);
-            $enrollment_table->appendChild($actionCell);
+            $approveButton->appendChild(DOMHelper::createElement($dom, 'span', 'loading-small'));
+            $actionsFlexBox->appendChild($approveButton);
+
+            $rejectBtnText = 'Reject';
+            if ($enrollment->status === 'approved') {
+                $rejectBtnText = 'Remove';
+            }
+            $rejectButton = DOMHelper::createElement($dom, 'button', 'class-manage-action-btn reject-enrollment-btn', null, null, [
+                'data-enrollment-id' => $enrollment->id,
+                'type' => 'button',
+                'disabled' => 'disabled'
+            ]);
+            $rejectBtnLabel = DOMHelper::createElement($dom, 'span', 'reject-enrollment-btn-label', null, $rejectBtnText);
+            $rejectButton->appendChild($rejectBtnLabel);
+            $actionsFlexBox->appendChild($rejectButton);
+            $actionCell->appendChild($actionsFlexBox);
+            $row->appendChild($actionCell);
         }
 
         $approveDialog = DOMHelper::createElement($dom, 'dialog', 'approve-dialog', 'approveDialog');
@@ -80,7 +139,9 @@ class ClassManagementShortcode {
         $studentSelect->appendChild(DOMHelper::createElement($dom, 'option', 'approve-dialog-student-select-option', null, 'Select a student', ['selected' => 'selected', 'disabled' => 'disabled', 'value' => '']));
         $controlsContainer->appendChild($studentSelect);
         $controlsContainer->appendChild(DOMHelper::createElement($dom, 'button', 'approve-dialog-cancel', null, 'Cancel'));
-        $controlsContainer->appendChild(DOMHelper::createElement($dom, 'button', 'approve-dialog-confirm', null, 'Confirm', ['disabled' => 'disabled']));
+        $confirmButton = DOMHelper::createElement($dom, 'button', 'approve-dialog-confirm', null, null, ['disabled' => 'disabled']);
+        $confirmButton->appendChild(DOMHelper::createElement($dom, 'span', 'approve-dialog-confirm-text', null, 'Confirm'));
+        $controlsContainer->appendChild($confirmButton);
         $approveDialog->appendChild($controlsContainer);
         $dom->appendChild($approveDialog);
 
@@ -109,9 +170,8 @@ class ClassManagementShortcode {
         $enrollment_table = DOMHelper::createElement($dom, 'table', 'enrollment-table');
         $table_header = DOMHelper::createElement($dom, 'thead', 'enrollment-table-header');
         $table_header->appendChild(DOMHelper::createElement($dom, 'tr', 'enrollment-table-row'));
-        $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Student Name'));
-        $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Parent Name'));
-        $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Parent Email'));
+        $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Student'));
+        $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Parent'));
         $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Status'));
         $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Actions'));
         $enrollment_table->appendChild($table_header);
@@ -136,6 +196,7 @@ class ClassManagementShortcode {
                 wp_localize_script('tiger-grades-class-management', 'tigerGradesData', array(
                     'studentApiUrl' => rest_url('tiger-grades/v1/students'),
                     'approveApiUrl' => rest_url('tiger-grades/v1/approve-enrollment'),
+                    'rejectApiUrl' => rest_url('tiger-grades/v1/reject-enrollment'),
                     'nonce' => wp_create_nonce('wp_rest'),
                     'class_id' => $class_id
                 ));
