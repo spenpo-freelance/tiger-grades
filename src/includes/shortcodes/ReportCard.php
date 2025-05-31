@@ -92,6 +92,10 @@ class ReportCardShortcode {
             return $dom->saveHTML();
         }
 
+        if ($is_teacher) {
+            $this->renderReportCardUI($dom, $root);
+        }
+
         $enrollment = $this->classRepository->getEnrollment($enrollment_id);
         if (!$enrollment || $enrollment->user_id != $user_id) {
             error_log('Enrollment not found or user not enrolled ' . 'enrolled user: ' . $enrollment->user_id . ' ' . 'current user: ' . $user_id . ' ' . 'full enrollment: ' . print_r($enrollment, true));
@@ -115,6 +119,10 @@ class ReportCardShortcode {
             return $dom->saveHTML();
         }
 
+        $this->renderReportCardContent($dom, $root);
+    }
+
+    private function renderReportCardUI($dom, $root) {
         $loading = DOMHelper::createElement($dom, 'div', 'loading-message');
         $loading->appendChild(DOMHelper::createElement($dom, 'p', 'loading-text', null, 'Loading content...'));
         $root->appendChild($loading);
@@ -136,21 +144,7 @@ class ReportCardShortcode {
         ));
 
         return $dom->saveHTML();
-        
-        /**
-         * Filters the final HTML output of the resume.
-         * 
-         * @since 0.0.0
-         * 
-         * @param string $html     The generated HTML
-         * @param array  $sections The resume sections data
-         * @return string The filtered HTML
-         */
-        // $html = apply_filters('tigr_report_card_html_output', $dom->saveHTML(), $report_card);
-        
-        // return $html;
     }
-
     // New protected method for better testability
     protected function getAPI() {
         return TigerGradesAPI::getInstance();

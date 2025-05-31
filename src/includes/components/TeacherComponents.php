@@ -74,7 +74,7 @@ class TeacherComponents {
 
         $classes = $this->repository->getTeacherClasses($user_id);
         
-        $classes_header_container = DOMHelper::createElement($dom, 'div', 'classes-table-header-container flexbox between');
+        $classes_header_container = DOMHelper::createElement($dom, 'div', 'classes-table-header-container flexbox between align-flex-end');
         $root->appendChild($classes_header_container);
         $classes_header = DOMHelper::createElement($dom, 'h2', 'classes-table-header', null, 'Classes');
         $classes_header_container->appendChild($classes_header);
@@ -82,9 +82,13 @@ class TeacherComponents {
         $add_class_button = DOMHelper::createElement($dom, 'a', 'btn btn-theme-primary register-class-btn', null, '+ Register Class', ['href' => "/teacher/classes/register/"]);
         $classes_header_container->appendChild($add_class_button);
 
-        $table = DOMHelper::createElement($dom, 'table', 'classes-table');
-        $root->appendChild($table);
+        $table_container = DOMHelper::createElement($dom, 'div', 'classes-table-container responsive-table-container');
+        $root->appendChild($table_container);
+        $table = DOMHelper::createElement($dom, 'table', 'classes-table responsive-table');
+        $table_container->appendChild($table);
 
+        $thead = DOMHelper::createElement($dom, 'thead', 'classes-table-thead');
+        $table->appendChild($thead);
         $headerRow = DOMHelper::createElement($dom, 'tr', 'classes-table-header');
         $titleHeader = DOMHelper::createElement($dom, 'th', 'classes-table-title-header');
         $titleHeader->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-title-header-text', null, 'Class'));
@@ -101,11 +105,14 @@ class TeacherComponents {
         $actionsHeader = DOMHelper::createElement($dom, 'th', 'classes-table-actions-header');
         $actionsHeader->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-actions-header-text', null, 'Actions'));
         $headerRow->appendChild($actionsHeader);
-        $table->appendChild($headerRow);
+        $thead->appendChild($headerRow);
+
+        $tbody = DOMHelper::createElement($dom, 'tbody', 'classes-table-tbody');
+        $table->appendChild($tbody);
 
         if (empty($classes)) {
             $row = DOMHelper::createElement($dom, 'tr', 'classes-table-row');
-            $table->appendChild($row);
+            $tbody->appendChild($row);
             $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell empty-state-message', null, 'No classes found.', ['colspan' => '5']);
             $row->appendChild($titleCell);
         } else {
@@ -116,7 +123,7 @@ class TeacherComponents {
                 }
                 
                 $row = DOMHelper::createElement($dom, 'tr', 'classes-table-row');
-                $table->appendChild($row);
+                $tbody->appendChild($row);
 
                 $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell');
                 $titleCell->appendChild(DOMHelper::createElement($dom, 'span', 'classes-table-title-cell-text', null, $class->title));
@@ -183,12 +190,8 @@ class TeacherComponents {
                 if ($isActive) {
                     $manageEnrollmentsButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button', null, 'Manage', ['href' => "/teacher/classes/{$class->id}/"]);
                     $actions_container->appendChild($manageEnrollmentsButton);
-                }
-                if ($isActive) {
                     $gradesButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button', null, 'Grades', ['href' => "/grades/{$class->id}/"]);
                     $actions_container->appendChild($gradesButton);
-                }
-                if ($isActive) {
                     $viewGradebookButton = DOMHelper::createElement($dom, 'a', 'classes-table-manage-enrollments-button', null, 'View', ['href' => $class->gradebook_url, 'target' => '_blank', 'rel' => 'noopener noreferrer']);
                     $actions_container->appendChild($viewGradebookButton);
                 }

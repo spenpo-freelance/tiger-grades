@@ -58,7 +58,7 @@ class ClassManagementShortcode {
             $table_body->appendChild($row);
             
             // Student cell
-            $student_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null);
+            $student_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell student-cell', null);
             $student_flex_box = DOMHelper::createElement($dom, 'div', 'student-info flex-cell');
             $student_name = DOMHelper::createElement($dom, 'p', 'student-name', null, "Enrolled as: $enrollment->student_name");
             $student_flex_box->appendChild($student_name);
@@ -75,7 +75,7 @@ class ClassManagementShortcode {
             $row->appendChild($student_cell);
             
             // Parent cell
-            $parent_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell', null);
+            $parent_cell = DOMHelper::createElement($dom, 'td', 'enrollment-table-cell parent-cell', null);
             $parent_flex_box = DOMHelper::createElement($dom, 'div', 'parent-info flex-cell');
             $parent_name = DOMHelper::createElement($dom, 'p', 'parent-name', null, $enrollment->parent_name);
             $parent_flex_box->appendChild($parent_name);
@@ -167,7 +167,10 @@ class ClassManagementShortcode {
 
         $enrollments_header = DOMHelper::createElement($dom, 'h2', 'enrollments-header', null, 'Enrollments');
         $root->appendChild($enrollments_header);
-        $enrollment_table = DOMHelper::createElement($dom, 'table', 'enrollment-table');
+
+        $enrollment_table_container = DOMHelper::createElement($dom, 'div', 'enrollment-table-container responsive-table-container');
+        $root->appendChild($enrollment_table_container);
+        $enrollment_table = DOMHelper::createElement($dom, 'table', 'enrollment-table responsive-table');
         $table_header = DOMHelper::createElement($dom, 'thead', 'enrollment-table-header');
         $table_header->appendChild(DOMHelper::createElement($dom, 'tr', 'enrollment-table-row'));
         $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Student'));
@@ -175,7 +178,7 @@ class ClassManagementShortcode {
         $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Status'));
         $table_header->appendChild(DOMHelper::createElement($dom, 'th', 'enrollment-table-header-cell', null, 'Actions'));
         $enrollment_table->appendChild($table_header);
-        $root->appendChild($enrollment_table);
+        $enrollment_table_container->appendChild($enrollment_table);
 
         if ($user_id) {
             $class_id = get_query_var('class_id');

@@ -44,7 +44,7 @@ jQuery(document).ready(function($) {
     }
 
     function createGradeTable(type, isEmpty = false) {
-        const table = $('<table>').addClass('grade-table');
+        const table = $('<table>').addClass('responsive-table');
         table.append(createTableHeader(type));
         
         if (isEmpty) {
@@ -148,7 +148,7 @@ jQuery(document).ready(function($) {
             .append(controls);
 
         // Create and append grade table
-        const tableContainer = $('<div>').addClass('grade-table-container');
+        const tableContainer = $('<div>').addClass('responsive-table-container');
         
         if (isFirstRender) {
             // For teachers before student selection
