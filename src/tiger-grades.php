@@ -28,6 +28,9 @@ if (!defined('TIGER_GRADES_URL')) {
     define('TIGER_GRADES_URL', plugin_dir_url(__FILE__));
 }
 
+// Include autoloader
+require_once TIGER_GRADES_PATH . 'vendor/Parsedown.php';
+
 require_once TIGER_GRADES_PATH . 'includes/components/TeacherComponents.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/VersionManager.php';
 require_once TIGER_GRADES_PATH . 'includes/repositories/DatabaseManager.php';
@@ -50,6 +53,7 @@ require_once TIGER_GRADES_PATH . 'includes/shortcodes/ClassManagement.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/ParentClasses.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Registration.php';
+require_once TIGER_GRADES_PATH . 'includes/shortcodes/InfoBar.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/RewriteManager.php';
 
 // Enqueue scripts
