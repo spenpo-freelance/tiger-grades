@@ -4,7 +4,7 @@ jQuery(document).ready(function($) {
     const cancelBtn = document.querySelector('.approve-dialog-cancel');
     const enrollmentRows = $('.enrollment-table-row');
 
-    const { class_id, studentApiUrl, approveApiUrl, rejectApiUrl, nonce } = tigerGradesData;
+    const { class_id, studentApiUrl, approveApiUrl, rejectApiUrl, nonce, copy } = tigerGradesData;
 
     let selectedStudentId;
 
@@ -46,12 +46,12 @@ jQuery(document).ready(function($) {
                 success: function(data) {
                     rejectBtnLabel.text(rejectBtnText);
                     rejectBtnLabel.removeClass('loading-small');
-                    statusCell.text(data.data.status);
+                    statusCell.text(copy[data.data.status]);
                     rejectBtn.attr('disabled', 'disabled');
                 }
             });
         });
-        if (status !== 'rejected') {
+        if (status !== copy.rejected) {
             rejectBtn.removeAttr('disabled');
         }
     });
@@ -119,9 +119,9 @@ jQuery(document).ready(function($) {
                             },
                             success: function(data) {
                                 dialog.close();
-                                statusCell.text(data.data.status);
-                                approveBtn.text('Change');
-                                confirmText.text('Confirm');
+                                statusCell.text(copy[data.data.status]);
+                                approveBtn.text(copy.change);
+                                confirmText.text(copy.confirm);
                                 confirmText.removeClass('loading-small');
                                 const studentSelect = document.querySelector('.approve-dialog-student-select');
                                 studentSelect.value = '';
@@ -129,7 +129,7 @@ jQuery(document).ready(function($) {
                                 confirmApprovalBtn.disabled = true;
                             },
                             error: function(xhr, status, error) {
-                                confirmText.text('Confirm');
+                                confirmText.text(copy.confirm);
                                 confirmText.removeClass('loading-small');
                                 const errorMessage = document.createElement('div');
                                 errorMessage.className = 'error-message';

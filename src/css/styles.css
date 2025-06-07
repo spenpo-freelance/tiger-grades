@@ -556,11 +556,11 @@ dialog::backdrop {
 }
 
 .expand-past-classes-input:checked + .expand-past-classes-label::after {
-    content: "Hide past classes";
+    content: var(--hide-text);
 }
 
 .expand-past-classes-label::after {
-    content: "Show past classes";
+    content: var(--show-text);
 }
 
 .error-message {

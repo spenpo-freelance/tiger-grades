@@ -5,7 +5,7 @@
  * Description:       Education intelligence for teachers, parents and teaching organizations
  * Requires at least: 6.8
  * Requires PHP:      7.2
- * Version:           0.1.0
+ * Version:           0.1.1
  * Author:            spenpo
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -32,6 +32,10 @@ if (!defined('TIGER_GRADES_URL')) {
 require_once TIGER_GRADES_PATH . 'vendor/Parsedown.php';
 
 require_once TIGER_GRADES_PATH . 'includes/components/TeacherComponents.php';
+require_once TIGER_GRADES_PATH . 'includes/components/GeneralComponents.php';
+require_once TIGER_GRADES_PATH . 'includes/repositories/TranslationRepository.php';
+require_once TIGER_GRADES_PATH . 'includes/utilities/LanguageManager.php';
+require_once TIGER_GRADES_PATH . 'includes/utilities/StringTranslationsManager.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/VersionManager.php';
 require_once TIGER_GRADES_PATH . 'includes/repositories/DatabaseManager.php';
 require_once TIGER_GRADES_PATH . 'includes/repositories/TigerClassRepository.php';
@@ -84,3 +88,9 @@ function enqueue_tiger_grades_styles() {
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_styles');
+
+// Register string translations on plugin activation
+register_activation_hook(__FILE__, function() {
+    // Register string translations
+    Spenpo\TigerGrades\Utilities\StringTranslationsManager::registerTranslations();
+});

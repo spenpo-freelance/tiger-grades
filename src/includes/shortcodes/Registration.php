@@ -4,6 +4,7 @@ namespace Spenpo\TigerGrades\Shortcodes;
 use Spenpo\TigerGrades\Utilities\DOMHelper;
 use DOMDocument;
 use Spenpo\TigerGrades\API\GeneralAPI;
+use Spenpo\TigerGrades\Repositories\TigerGeneralRepository;
 /**
  * Handles the [tigr_version] shortcode functionality.
  * 
@@ -12,11 +13,13 @@ use Spenpo\TigerGrades\API\GeneralAPI;
  */
 class RegistrationShortcode {
     private $text_translations;
+    private $generalRepository;
     private $api;
     /**
      * Constructor initializes and registers the shortcode.
      */
     public function __construct() {
+        $this->generalRepository = new TigerGeneralRepository();
         $this->api = $this->getAPI();
         // Register the shortcode
         add_shortcode('tigr_registration', [$this, 'render']);
@@ -55,7 +58,8 @@ class RegistrationShortcode {
         
         $form_container = DOMHelper::createElement($dom, 'div', 'registration-form-container');
         $temp = new DOMDocument();
-        $user_registration_id = get_option('tigr_ur_user_form_id');
+        $user_registration_id = $this->generalRepository->getUserRegistrationFormId('subscriber');
+        $teacher_registration_id = $this->generalRepository->getUserRegistrationFormId('teacher');
         @$temp->loadHTML(do_shortcode('[user_registration_form id="'.$user_registration_id.'"]'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
         $node = $dom->importNode($temp->documentElement, true);
         $form_container->appendChild($node);
@@ -73,8 +77,8 @@ class RegistrationShortcode {
             'tiger-grades-user-registration',
             'tigr_ajax_object',
             array(
-                'teacher_form_id' => get_option('tigr_ur_teacher_form_id'),
-                'user_form_id' => get_option('tigr_ur_user_form_id'),
+                'teacher_form_id' => $teacher_registration_id,
+                'user_form_id' => $user_registration_id,
                 'ajax_url' => rest_url('tiger-grades/v1/shortcode')
             )
         );

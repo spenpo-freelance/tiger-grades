@@ -8,6 +8,7 @@ use WP_Error;
 use WP_REST_Response;
 use Spenpo\TigerGrades\Utilities\DOMHelper;
 use Spenpo\TigerGrades\Repositories\TigerClassRepository;
+use Spenpo\TigerGrades\Components\GeneralComponents;
 /**
  * Handles the [tigr_class_enroll] shortcode functionality.
  * 
@@ -58,12 +59,8 @@ class EnrollClassShortcode {
         $dom->appendChild($root);
 
         if (!$user_id) {
-            $not_logged_in_message = DOMHelper::createElement($dom, 'div', 'not-logged-in-message');
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, 'Please '));
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'a', 'not-logged-in-message-text', null, 'log in', ['href' => '/my-account']));
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, ' to view your child\'s grades.'));
-            $root->appendChild($not_logged_in_message);
-            return $dom->saveHTML();
+            $generalComponents = new GeneralComponents();
+            return $generalComponents->createUnauthenticatedMessage($dom, $root);
         }
 
         $enrollment_code = isset($_GET['code']) ? sanitize_text_field($_GET['code']) : '';

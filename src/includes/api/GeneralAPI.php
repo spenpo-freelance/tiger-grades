@@ -7,7 +7,7 @@ use WP_Error;
 use stdClass;
 use DateTime;
 use Exception;
-use Spenpo\TigerGrades\Repositories\TigerClassRepository;
+use Spenpo\TigerGrades\Repositories\TigerGeneralRepository;
 /**
  * Handles all TigerGrades API functionality and route registration.
  * 
@@ -18,6 +18,7 @@ class GeneralAPI {
     /** @var self|null */
     private static $instance = null;
     private $api_errors;
+    private $generalRepository;
     /**
      * Private constructor to prevent direct instantiation.
      * Use getInstance() instead.
@@ -25,6 +26,7 @@ class GeneralAPI {
     private function __construct() {
         $this->register_routes();
         $this->api_errors = array();
+        $this->generalRepository = new TigerGeneralRepository();
     }
 
     /**
@@ -83,8 +85,8 @@ class GeneralAPI {
         
         // Optional: Validate form IDs if you want to restrict to specific forms
         $allowed_form_ids = []; // Your known registration form IDs
-        $allowed_form_ids[] = get_option('tigr_ur_user_form_id');
-        $allowed_form_ids[] = get_option('tigr_ur_teacher_form_id');
+        $allowed_form_ids[] = $this->generalRepository->getUserRegistrationFormId('subscriber');
+        $allowed_form_ids[] = $this->generalRepository->getUserRegistrationFormId('teacher');
         if (!in_array($matches[1], $allowed_form_ids)) {
             return new WP_Error(
                 'invalid_form_id',

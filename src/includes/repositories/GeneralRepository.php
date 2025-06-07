@@ -28,6 +28,35 @@ class TigerGeneralRepository {
      * @return array Array of user IDs who are allowed to access the route.
      * @throws Exception When database error occurs
      */
+    public function getUserRegistrationFormId($user_role) {
+        try {
+            $allowedQuery = $this->wpdb->prepare(
+                "SELECT `post_id`
+                 FROM `wp_postmeta` 
+                 WHERE `meta_key` = 'user_registration_form_setting_default_user_role' 
+                 AND `meta_value` = %s",
+                $user_role
+            );
+            
+            $results = $this->wpdb->get_results($allowedQuery);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+            
+            return $results[0]->post_id;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Get the users who are allowed to access a given secured route.
+     * 
+     * @param string $route The route to check access for.
+     * @return array Array of user IDs who are allowed to access the route.
+     * @throws Exception When database error occurs
+     */
     public function userIsAllowedForSecuredRoute($route, $user_id) {
         try {
             $allowedQuery = $this->wpdb->prepare(
