@@ -5,16 +5,14 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
 SET time_zone = "+00:00";
 
--- TODO: add permissions postmeta for Members plugin to necessary pages
 -- TODO: build english and chinese menu bars with the following pages and rules (if-menu plugin):
----- home
----- login/register: user not logged in
----- account: user logged in
----- enroll: user logged in, user is subscriber role
----- dashboard: user logged in, user is teacher role
----- grades: user logged in
----- news
----- account: user logged in
+-- home
+-- login/register: hide if is logged in
+-- account: show if is logged in
+-- enroll: show if is subscriber role
+-- dashboard: show if is teacher role
+-- grades: show if is logged in
+-- news
 
 -- Create stored procedure for page management
 DELIMITER //
@@ -106,7 +104,6 @@ BEGIN
 END //
 
 DROP PROCEDURE IF EXISTS create_pll_link;
-
 CREATE PROCEDURE create_pll_link(
     IN en_id INT,
     IN zh_id INT
@@ -223,14 +220,27 @@ BEGIN
         WHERE term_taxonomy_id = group_term_taxonomy_id;
         
     END IF;
-    
+END //
+
+DROP PROCEDURE IF EXISTS add_members_plugin_permissions_to_page;
+CREATE PROCEDURE add_members_plugin_permissions_to_page(
+    IN page_id INT,
+    IN role_id VARCHAR(50) -- teacher, subscriber, etc.
+)
+BEGIN
+    INSERT INTO wp_postmeta (post_id, meta_key, meta_value)
+    VALUES (page_id, '_members_access_role', role_id);
 END //
 DELIMITER ;
 
 -- English Login page
 CALL create_or_update_page(
     'Login',
-    '<!-- wp:shortcode -->\n[user_registration_login]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_login]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'login',
     0,
     'closed',
@@ -241,7 +251,11 @@ CALL create_or_update_page(
 -- Mandarin Login
 CALL create_or_update_page(
     '登录',
-    '<!-- wp:shortcode -->\n[user_registration_login]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_login]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'login-zh',
     0,
     'closed',
@@ -257,7 +271,11 @@ CALL create_pll_link(
 -- Account /account
 CALL create_or_update_page(
     'Account',
-    '<!-- wp:shortcode -->\n[user_registration_my_account]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_my_account]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'account',
     0,
     'closed',
@@ -268,7 +286,11 @@ CALL create_or_update_page(
 -- Mandarin Account
 CALL create_or_update_page(
     '账户',
-    '<!-- wp:shortcode -->\n[user_registration_my_account]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_my_account]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'account-zh',
     0,
     'closed',
@@ -284,7 +306,36 @@ CALL create_pll_link(
 -- Enroll in a class /enroll
 CALL create_or_update_page(
     'Enroll',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Instructions\" dismissible=\"true\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Enter the enrollment code you received from your teacher.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Enter the name of the student whose grades you want to monitor.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>The teacher will also see your name and email.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>The teacher will then match this info with a student in their gradebook.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:shortcode -->\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_info_bar type=\"warning\" title=\"Warning\" dismissible=\"true\"]\nOnly enter enrollment codes you received **directly** from your teacher.\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_class_enroll]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="Instructions" dismissible="true"]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:list -->\n',
+        '<ul class="wp-block-list"><!-- wp:list-item -->\n',
+        '<li>Enter the enrollment code you received from your teacher.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>Enter the name of the student whose grades you want to monitor.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>The teacher will also see your name and email.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>The teacher will then match this info with a student in their gradebook.</li>\n',
+        '<!-- /wp:list-item --></ul>\n',
+        '<!-- /wp:list -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="warning" title="Warning" dismissible="true"]\n',
+        'Only enter enrollment codes you received **directly** from your teacher.\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_class_enroll]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'enroll',
     0,
     'closed',
@@ -295,7 +346,36 @@ CALL create_or_update_page(
 -- Mandarin Enroll
 CALL create_or_update_page(
     '报名课程',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Instructions\" dismissible=\"true\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Enter the enrollment code you received from your teacher.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Enter the name of the student whose grades you want to monitor.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>The teacher will also see your name and email.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>The teacher will then match this info with a student in their gradebook.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:shortcode -->\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_info_bar type=\"warning\" title=\"Warning\" dismissible=\"true\"]\nOnly enter enrollment codes you received **directly** from your teacher.\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_class_enroll]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="说明" dismissible="true"]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:list -->\n',
+        '<ul class="wp-block-list"><!-- wp:list-item -->\n',
+        '<li>输入您从老师那里收到的注册码。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>输入您想要监控成绩的学生姓名。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>老师也会看到您的姓名和邮箱地址。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>老师随后会将此信息与其成绩册中的学生进行匹配。</li>\n',
+        '<!-- /wp:list-item --></ul>\n',
+        '<!-- /wp:list -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="warning" title="警告" dismissible="true"]\n',
+        '仅输入您**直接**从老师那里收到的注册码。\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_class_enroll]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'enroll-zh',
     0,
     'closed',
@@ -308,10 +388,49 @@ CALL create_pll_link(
     @zh_id
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id,
+    'subscriber'
+);
+
 -- Teacher dashboard /teacher
 CALL create_or_update_page(
     'Teacher',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Usage\" dismissible=\"true\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Share the enrollment QR code, URL, or the six-digit code itself with your students or their parents.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Click \"Manage\" to respond to the people who use the code to enroll in your class.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Click \"Grades\" to view the grades page to which your enrollments will gain access. Teachers can check any student''s grades there.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Click \"View\" to go to your class''s gradebook in OneDrive, where you can input new grades regularly.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:shortcode -->\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_info_bar type=\"warning\" icon=\"fas fa-lightbulb\" title=\"Warning\" dismissible=\"true\"]\n[Contact support](mailto:spencer@tigergrades.com) if your class has been in \"pending\" status for longer than 10 minutes.\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_teacher_dashboard]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="Usage" dismissible="true"]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:list -->\n',
+        '<ul class="wp-block-list"><!-- wp:list-item -->\n',
+        '<li>Share the enrollment QR code, URL, or the six-digit code itself with your students or their parents.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>Click "Manage" to respond to the people who use the code to enroll in your class.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>Click "Grades" to view the grades page to which your enrollments will gain access. Teachers can check any student''s grades there.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>Click "View" to go to your class''s gradebook in OneDrive, where you can input new grades regularly.</li>\n',
+        '<!-- /wp:list-item --></ul>\n',
+        '<!-- /wp:list -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="warning" icon="fas fa-lightbulb" title="Warning" dismissible="true"]\n',
+        '[Contact support](mailto:spencer@tigergrades.com) if your class has been in "pending" status for longer than 10 minutes.\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_teacher_dashboard]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'teacher',
     0,
     'closed',
@@ -322,7 +441,36 @@ CALL create_or_update_page(
 -- Mandarin Teacher dashboard
 CALL create_or_update_page(
     '老师',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Usage\" dismissible=\"true\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Share the enrollment QR code, URL, or the six-digit code itself with your students or their parents.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Click \"Manage\" to respond to the people who use the code to enroll in your class.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Click \"Grades\" to view the grades page to which your enrollments will gain access. Teachers can check any student''s grades there.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Click \"View\" to go to your class''s gradebook in OneDrive, where you can input new grades regularly.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:shortcode -->\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_info_bar type=\"warning\" icon=\"fas fa-lightbulb\" title=\"Warning\" dismissible=\"true\"]\n[Contact support](mailto:spencer@tigergrades.com) if your class has been in \"pending\" status for longer than 10 minutes.\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_teacher_dashboard]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="使用说明" dismissible="true"]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:list -->\n',
+        '<ul class="wp-block-list"><!-- wp:list-item -->\n',
+        '<li>与您的学生或其家长分享注册二维码、网址或六位数代码。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>点击"管理"以回应使用代码注册您班级的人员。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>点击"成绩"查看您的注册用户将获得访问权限的成绩页面。老师可以在那里查看任何学生的成绩。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>点击"查看"前往您在OneDrive中的班级成绩册，您可以在那里定期输入新成绩。</li>\n',
+        '<!-- /wp:list-item --></ul>\n',
+        '<!-- /wp:list -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="warning" icon="fas fa-lightbulb" title="警告" dismissible="true"]\n',
+        '如果您的班级处于"待处理"状态超过10分钟，请[联系支持](mailto:spencer@tigergrades.com)。\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_teacher_dashboard]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'teacher-zh',
     0,
     'closed',
@@ -333,6 +481,16 @@ CALL create_or_update_page(
 CALL create_pll_link(
     @en_id_teacher,
     @zh_id_teacher
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @en_id_teacher,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id_teacher,
+    'teacher'
 );
 
 -- Teacher classes /teacher/classes
@@ -362,10 +520,41 @@ CALL create_pll_link(
     @zh_id_teacher_classes
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id_teacher_classes,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id_teacher_classes,
+    'teacher'
+);
+
 -- Class management /teacher/classes/[id]
 CALL create_or_update_page(
     'Class management',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Usage\" dismissible=\"true\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Click \"Approve\" to assign a student to an enrollment. If you assign the wrong student to an enrollment, click \"Change\" to correct the mistake.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Only one student can be assigned to an enrollment at a time. Parents with more than one student in your class can enroll again.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Enrollments can be approved or rejected at any time.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:shortcode -->\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_teacher_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="Usage" dismissible="true"]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:list -->\n',
+        '<ul class="wp-block-list"><!-- wp:list-item -->\n',
+        '<li>Click "Approve" to assign a student to an enrollment. If you assign the wrong student to an enrollment, click "Change" to correct the mistake.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>Only one student can be assigned to an enrollment at a time. Parents with more than one student in your class can enroll again.</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>Enrollments can be approved or rejected at any time.</li>\n',
+        '<!-- /wp:list-item --></ul>\n',
+        '<!-- /wp:list -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_teacher_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'teacher-class',
     @en_id_teacher_classes,
     'closed',
@@ -376,7 +565,28 @@ CALL create_or_update_page(
 -- Mandarin Class management
 CALL create_or_update_page(
     '课程管理',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Usage\" dismissible=\"true\"]\n<!-- /wp:shortcode -->\n\n<!-- wp:list -->\n<ul class=\"wp-block-list\"><!-- wp:list-item -->\n<li>Click \"Approve\" to assign a student to an enrollment. If you assign the wrong student to an enrollment, click \"Change\" to correct the mistake.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Only one student can be assigned to an enrollment at a time. Parents with more than one student in your class can enroll again.</li>\n<!-- /wp:list-item -->\n\n<!-- wp:list-item -->\n<li>Enrollments can be approved or rejected at any time.</li>\n<!-- /wp:list-item --></ul>\n<!-- /wp:list -->\n\n<!-- wp:shortcode -->\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_teacher_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="使用说明" dismissible="true"]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:list -->\n',
+        '<ul class="wp-block-list"><!-- wp:list-item -->\n',
+        '<li>点击"批准"将学生分配给注册。如果您将错误的学生分配给注册，请点击"更改"以纠正错误。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>每次只能将一个学生分配给一个注册。在您班级中有多个学生的家长可以再次注册。</li>\n',
+        '<!-- /wp:list-item -->\n\n',
+        '<!-- wp:list-item -->\n',
+        '<li>注册可以随时批准或拒绝。</li>\n',
+        '<!-- /wp:list-item --></ul>\n',
+        '<!-- /wp:list -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_teacher_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'teacher-class-zh',
     @zh_id_teacher_classes,
     'closed',
@@ -389,10 +599,29 @@ CALL create_pll_link(
     @zh_id
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id,
+    'teacher'
+);
+
 -- Register a new class /teacher/classes/register
 CALL create_or_update_page(
     'Register a new class',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Information\" dismissible=\"true\"]\nAfter a successful registration, you will see your class in the [teacher''s dashboard](/teacher) and [grades page](/grades). Your cloud-based gradebook will then be created in the background. Once it''s ready, the class will become active. It only takes a few minutes.\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_register_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="Information" dismissible="true"]\n',
+        'After a successful registration, you will see your class in the [teacher''s dashboard](/teacher) and [grades page](/grades). Your cloud-based gradebook will then be created in the background. Once it''s ready, the class will become active. It only takes a few minutes.\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_register_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'register',
     @en_id_teacher_classes,
     'closed',
@@ -403,7 +632,16 @@ CALL create_or_update_page(
 -- Mandarin Register a new class
 CALL create_or_update_page(
     '创建课程',
-    '<!-- wp:shortcode -->\n[tigr_info_bar type=\"info\" icon=\"fas fa-lightbulb\" title=\"Information\" dismissible=\"true\"]\nAfter a successful registration, you will see your class in the [teacher''s dashboard](/teacher) and [grades page](/grades). Your cloud-based gradebook will then be created in the background. Once it''s ready, the class will become active. It only takes a few minutes.\n[/tigr_info_bar]\n<!-- /wp:shortcode -->\n\n<!-- wp:shortcode -->\n[tigr_register_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_info_bar type="info" icon="fas fa-lightbulb" title="信息" dismissible="true"]\n',
+        '注册成功后，您将在[教师控制台](/zh/teacher-zh)和[成绩页面](/zh/grades-zh)中看到您的班级。您的云端成绩册将在后台创建。一旦准备就绪，班级将变为活跃状态。这只需要几分钟时间。\n',
+        '[/tigr_info_bar]\n',
+        '<!-- /wp:shortcode -->\n\n',
+        '<!-- wp:shortcode -->\n',
+        '[tigr_register_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'register-zh',
     @zh_id_teacher_classes,
     'closed',
@@ -416,10 +654,24 @@ CALL create_pll_link(
     @zh_id
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id,
+    'teacher'
+);
+
 -- Classes /grades
 CALL create_or_update_page(
     'Grades',
-    '<!-- wp:shortcode -->\n[tigr_parent_classes]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_parent_classes]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'grades',
     0,
     'open',
@@ -430,7 +682,11 @@ CALL create_or_update_page(
 -- Mandarin Classes
 CALL create_or_update_page(
     '成绩',
-    '<!-- wp:shortcode -->\n[tigr_parent_classes]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_parent_classes]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'grades-zh',
     0,
     'open',
@@ -443,10 +699,34 @@ CALL create_pll_link(
     @zh_id_grades
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id_grades,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id_grades,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @en_id_grades,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id_grades,
+    'teacher'
+);
+
 -- Class grades /grades/[id]
 CALL create_or_update_page(
     'Class grades',
-    '<!-- wp:shortcode -->\n[tigr_parent_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_parent_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'parent-class',
     @en_id_grades,
     'closed',
@@ -457,7 +737,11 @@ CALL create_or_update_page(
 -- Mandarin Class grades
 CALL create_or_update_page(
     '课程成绩',
-    '<!-- wp:shortcode -->\n[tigr_parent_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_parent_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'parent-class-zh',
     @zh_id_grades,
     'closed',
@@ -470,10 +754,34 @@ CALL create_pll_link(
     @zh_id_class_grades
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id_class_grades,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id_class_grades,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @en_id_class_grades,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id_class_grades,
+    'teacher'
+);
+
 -- Class grade category /grades/[id]/[category]
 CALL create_or_update_page(
     'Category',
-    '<!-- wp:shortcode -->\n[tigr_parent_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_parent_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'category',
     @en_id_class_grades,
     'closed',
@@ -484,7 +792,11 @@ CALL create_or_update_page(
 -- Mandarin Class grade category
 CALL create_or_update_page(
     '成绩类别',
-    '<!-- wp:shortcode -->\n[tigr_parent_class]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_parent_class]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'category-zh',
     @zh_id_class_grades,
     'closed',
@@ -497,10 +809,34 @@ CALL create_pll_link(
     @zh_id
 );
 
+CALL add_members_plugin_permissions_to_page(
+    @en_id,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id,
+    'subscriber'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @en_id,
+    'teacher'
+);
+
+CALL add_members_plugin_permissions_to_page(
+    @zh_id,
+    'teacher'
+);
+
 -- Register users /register
 CALL create_or_update_page(
     'Register',
-    '<!-- wp:shortcode -->\n[tigr_registration]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_registration]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'register',
     0,
     'closed',
@@ -511,7 +847,11 @@ CALL create_or_update_page(
 -- Mandarin Register users
 CALL create_or_update_page(
     '注册账号',
-    '<!-- wp:shortcode -->\n[tigr_registration]\n<!-- /wp:shortcode -->',
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[tigr_registration]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'register-zh',
     0,
     'closed',
@@ -530,7 +870,11 @@ SELECT `post_id` INTO @user_register_form_id FROM `wp_postmeta` WHERE `meta_key`
 
 CALL create_or_update_page(
     'Register as a Teacher',
-    CONCAT('<!-- wp:shortcode -->\n[user_registration_form id=\"', @user_register_form_id, '\"]\n<!-- /wp:shortcode -->'),
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_form id="', @user_register_form_id, '"]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'teacher',
     @en_id_register,
     'closed',
@@ -541,7 +885,11 @@ CALL create_or_update_page(
 -- Mandarin Register as a teacher
 CALL create_or_update_page(
     '老师注册账号',
-    CONCAT('<!-- wp:shortcode -->\n[user_registration_form id=\"', @user_register_form_id, '\"]\n<!-- /wp:shortcode -->'),
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_form id="', @user_register_form_id, '"]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'teacher-zh',
     @zh_id_register,
     'closed',
@@ -560,7 +908,11 @@ SELECT `post_id` INTO @user_register_form_id FROM `wp_postmeta` WHERE `meta_key`
 
 CALL create_or_update_page(
     'Register as a Parent',
-    CONCAT('<!-- wp:shortcode -->\n[user_registration_form id=\"', @user_register_form_id, '\"]\n<!-- /wp:shortcode -->'),
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_form id="', @user_register_form_id, '"]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'parent',
     @en_id_register,
     'closed',
@@ -571,7 +923,11 @@ CALL create_or_update_page(
 -- Mandarin Register as a parent
 CALL create_or_update_page(
     '家长注册账号',
-    CONCAT('<!-- wp:shortcode -->\n[user_registration_form id=\"', @user_register_form_id, '\"]\n<!-- /wp:shortcode -->'),
+    CONCAT(
+        '<!-- wp:shortcode -->\n',
+        '[user_registration_form id="', @user_register_form_id, '"]\n',
+        '<!-- /wp:shortcode -->'
+    ),
     'parent-zh',
     @zh_id_register,
     'closed',

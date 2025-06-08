@@ -5,6 +5,7 @@ use Spenpo\TigerGrades\Utilities\DOMHelper;
 use DOMDocument;
 use Spenpo\TigerGrades\API\GeneralAPI;
 use Spenpo\TigerGrades\Repositories\TigerGeneralRepository;
+use Spenpo\TigerGrades\Utilities\LanguageManager;
 /**
  * Handles the [tigr_version] shortcode functionality.
  * 
@@ -15,12 +16,14 @@ class RegistrationShortcode {
     private $text_translations;
     private $generalRepository;
     private $api;
+    private $plugin_domain;
     /**
      * Constructor initializes and registers the shortcode.
      */
     public function __construct() {
         $this->generalRepository = new TigerGeneralRepository();
         $this->api = $this->getAPI();
+        $this->plugin_domain = LanguageManager::getInstance()->getPluginDomain();
         // Register the shortcode
         add_shortcode('tigr_registration', [$this, 'render']);
     }
@@ -36,20 +39,20 @@ class RegistrationShortcode {
         
         $dom = new DOMDocument('1.0', 'utf-8');
         $root = DOMHelper::createElement($dom, 'div', 'registration-container');
-        $header = DOMHelper::createElement($dom, 'h2', 'Welcome to Tiger Grades');
-        $subHeader = DOMHelper::createElement($dom, 'h3', 'Which kind of account are you looking for?');
+        $header = DOMHelper::createElement($dom, 'h2', 'register-welcome-header', null, __('Welcome to Tiger Grades', $this->plugin_domain));
+        $subHeader = DOMHelper::createElement($dom, 'h3', 'register-welcome-subheader', null, __('Which kind of account do you need', $this->plugin_domain) . '?');
         $root->appendChild($header);
         $root->appendChild($subHeader);
         $dom->appendChild($root);
         $form_control = DOMHelper::createElement($dom, 'div', 'registration-buttons', null, null, [
             'data-active' => 'user'
         ]);
-        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, 'Parent/Student', [
+        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, __('Parent', $this->plugin_domain) . '/' . __('Student', $this->plugin_domain), [
             'type' => 'button',
             'name' => 'email',
             'data-form-id' => 'user',
         ]));
-        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, 'Teacher', [
+        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, __('Teacher', $this->plugin_domain), [
             'type' => 'button',
             'name' => 'email',
             'data-form-id' => 'teacher'

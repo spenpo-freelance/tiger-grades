@@ -545,6 +545,253 @@ class LanguageManager {
                     'en' => 'Please',
                     'zh' => '请',
                 ]
+            ],
+            // shortcodes/EnrollClass.php
+            [
+                'key' => 'enroll_in_a_class',
+                'translations' => [
+                    'en' => 'Enroll in a class',
+                    'zh' => '注册班级',
+                ]
+            ],
+            [
+                'key' => 'submit',
+                'translations' => [
+                    'en' => 'Submit',
+                    'zh' => '提交',
+                ]
+            ],
+            [
+                'key' => 'enrollment_code',
+                'translations' => [
+                    'en' => 'Enrollment Code',
+                    'zh' => '注册代码',
+                ]
+            ],
+            [
+                'key' => 'student_name',
+                'translations' => [
+                    'en' => 'Student Name',
+                    'zh' => '学生姓名',
+                ]
+            ],
+            [
+                'key' => 'optional_message',
+                'translations' => [
+                    'en' => 'Optional message for the teacher',
+                    'zh' => '可选消息给老师',
+                ]
+            ],
+            [
+                'key' => 'anything_else_the_teacher_should_know',
+                'translations' => [
+                    'en' => 'Anything else the teacher should know',
+                    'zh' => '老师还需要知道什么',
+                ]
+            ],
+            [
+                'key' => 'successfully_enrolled_in_class',
+                'translations' => [
+                    'en' => 'Successfully enrolled in class',
+                    'zh' => '成功注册班级',
+                ]
+            ],
+            // shortcodes/RegisterClass.php
+            [
+                'key' => 'register_a_new_class',
+                'translations' => [
+                    'en' => 'Register a new class',
+                    'zh' => '注册新班级',
+                ]
+            ],
+            [
+                'key' => 'title',
+                'translations' => [
+                    'en' => 'Title',
+                    'zh' => '标题',
+                ]
+            ],
+            [
+                'key' => 'enter_the_title_of_the_class',
+                'translations' => [
+                    'en' => 'Enter the title of the class',
+                    'zh' => '输入班级标题',
+                ]
+            ],
+            [
+                'key' => 'description',
+                'translations' => [
+                    'en' => 'Description',
+                    'zh' => '描述',
+                ]
+            ],
+            [
+                'key' => 'this_will_be_shown_to_everyone_who_has_your_enrollment_code',
+                'translations' => [
+                    'en' => '(This will be shown to everyone who has your enrollment code)',
+                    'zh' => '( 这将显示给所有拥有您的注册代码的人 )',
+                ]
+            ],
+            [
+                'key' => 'enter_a_short_description_of_the_class',
+                'translations' => [
+                    'en' => 'Enter a short description of the class',
+                    'zh' => '输入班级描述',
+                ]
+            ],
+            [
+                'key' => 'start_date',
+                'translations' => [
+                    'en' => 'Start Date',
+                    'zh' => '开始日期',
+                ]
+            ],
+            [
+                'key' => 'enter_the_start_date_of_the_class',
+                'translations' => [
+                    'en' => 'Enter the start date of the class',
+                    'zh' => '输入班级开始日期',
+                ]
+            ],
+            [
+                'key' => 'end_date',
+                'translations' => [
+                    'en' => 'End Date',
+                    'zh' => '结束日期',
+                ]
+            ],
+            [
+                'key' => 'enter_the_end_date_of_the_class',
+                'translations' => [
+                    'en' => 'Enter the end date of the class',
+                    'zh' => '输入班级结束日期',
+                ]
+            ],
+            [
+                'key' => 'class_type',
+                'translations' => [
+                    'en' => 'Class Type',
+                    'zh' => '班级类型',
+                ]
+            ],
+            [
+                'key' => 'english',
+                'translations' => [
+                    'en' => 'English',
+                    'zh' => '英语',
+                ]
+            ],
+            [
+                'key' => 'math',
+                'translations' => [
+                    'en' => 'Math',
+                    'zh' => '数学',
+                ]
+            ],
+            [
+                'key' => 'science',
+                'translations' => [
+                    'en' => 'Science',
+                    'zh' => '科学',
+                ]
+            ],
+            [
+                'key' => 'history',
+                'translations' => [
+                    'en' => 'History',
+                    'zh' => '历史',
+                ]
+            ],
+            [
+                'key' => 'physical_education',
+                'translations' => [
+                    'en' => 'PE',
+                    'zh' => '体育',
+                ]
+            ],
+            [
+                'key' => 'foreign_language',
+                'translations' => [
+                    'en' => 'Foreign Language',
+                    'zh' => '外语',
+                ]
+            ],
+            [
+                'key' => 'chinese',
+                'translations' => [
+                    'en' => 'Chinese',
+                    'zh' => '中文',
+                ]
+            ],
+            [
+                'key' => 'art',
+                'translations' => [
+                    'en' => 'Art',
+                    'zh' => '艺术',
+                ]
+            ],
+            [
+                'key' => 'estimated_class_size',
+                'translations' => [
+                    'en' => 'Estimated Class Size',
+                    'zh' => '估计班级大小',
+                ]
+            ],
+            [
+                'key' => 'estimated_number_of_categories',
+                'translations' => [
+                    'en' => 'Estimated Number of Categories',
+                    'zh' => '估计类别数量',
+                ]
+            ],
+            [
+                'key' => 'ie_tests_quizzes_homework_etc',
+                'translations' => [
+                    'en' => '(ie. tests, quizzes, homework, etc.)',
+                    'zh' => '( 如考试、测验、作业等 )',
+                ]
+            ],
+            [
+                'key' => 'anything_else_we_should_know',
+                'translations' => [
+                    'en' => 'Anything else we should know?',
+                    'zh' => '我们还需要知道什么吗？',
+                ]
+            ],
+            [
+                'key' => 'we_read_this_but_it_wont_be_shown_to_anyone_else',
+                'translations' => [
+                    'en' => '(We read this, but it won\'t be shown to anyone else)',
+                    'zh' => '( 我们读了这些，但不会显示给任何人 )',
+                ]
+            ],
+            [
+                'key' => 'enter_any_additional_information_about_your_class',
+                'translations' => [
+                    'en' => 'Enter any additional information about your class',
+                    'zh' => '输入任何关于班级的额外信息',
+                ]
+            ],
+            [
+                'key' => 'the_following_class_has_been_created',
+                'translations' => [
+                    'en' => 'The following class has been created',
+                    'zh' => '以下班级已创建',
+                ]
+            ],
+            [
+                'key' => 'welcome_to_tiger_grades',
+                'translations' => [
+                    'en' => 'Welcome to Tiger Grades',
+                    'zh' => '欢迎使用 Tiger Grades',
+                ]
+            ],
+            [
+                'key' => 'which_kind_of_account_do_you_need',
+                'translations' => [
+                    'en' => 'Which kind of account do you need',
+                    'zh' => '您需要哪种账户',
+                ]
             ]
         ];
     }
@@ -699,6 +946,88 @@ class LanguageManager {
         return $translated_slug ?: $route;
     }
     
+    /**
+     * Sets the current language for REST API requests based on the Accept-Language header
+     * or a custom 'lang' parameter.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return void
+     */
+    public function setRestApiLanguage($request) {
+        // First, try to get language from query parameter
+        $lang = $request->get_param('lang');
+        
+        // If not found, try to get from Accept-Language header
+        if (!$lang) {
+            $accept_language = $request->get_header('accept-language');
+            if ($accept_language) {
+                // Extract the first language code from Accept-Language header
+                preg_match('/^([a-z]{2})(?:-[A-Z]{2})?/', $accept_language, $matches);
+                if (!empty($matches[1])) {
+                    $lang = $matches[1];
+                }
+            }
+        }
+        
+        // Set the language in Polylang if valid
+        if ($lang && function_exists('PLL')) {
+            $available_languages = pll_languages_list();
+            if (in_array($lang, $available_languages)) {
+                PLL()->curlang = PLL()->model->get_language($lang);
+                // Also set WordPress locale
+                switch_to_locale(PLL()->curlang->locale);
+                
+                // Reload text domain for the new locale
+                $this->reloadTextDomain();
+            }
+        }
+    }
+
+    /**
+     * Reloads the plugin text domain for the current locale.
+     * 
+     * @return void
+     */
+    public function reloadTextDomain() {
+        // Unload existing text domain
+        if (is_textdomain_loaded($this->plugin_domain)) {
+            unload_textdomain($this->plugin_domain);
+        }
+        
+        // Load text domain for current locale
+        $locale = get_locale();
+        $lang_code = substr($locale, 0, 2); // Extract just the language code (e.g., 'zh' from 'zh_CN')
+        
+        // Try full locale first (e.g., zh_CN)
+        $mofile_full = WP_CONTENT_DIR . '/languages/plugins/' . $this->plugin_domain . '-' . $locale . '.mo';
+        
+        // Then try just language code (e.g., zh)
+        $mofile_lang = WP_CONTENT_DIR . '/languages/plugins/' . $this->plugin_domain . '-' . $lang_code . '.mo';
+        
+        if (file_exists($mofile_full)) {
+            load_textdomain($this->plugin_domain, $mofile_full);
+        } elseif (file_exists($mofile_lang)) {
+            load_textdomain($this->plugin_domain, $mofile_lang);
+        }
+    }
+
+    /**
+     * Registers REST API language detection for a specific API namespace.
+     * Call this method from your API classes to enable automatic language detection.
+     * 
+     * @param string $namespace The REST API namespace (e.g., 'tiger-grades')
+     * @return void
+     */
+    public function registerRestApiLanguageDetection($namespace) {
+        add_filter('rest_request_before_callbacks', function($response, $handler, $request) use ($namespace) {
+            // Only apply to specified API namespace
+            if (strpos($request->get_route(), '/' . $namespace . '/') === 0) {
+                $this->setRestApiLanguage($request);
+            }
+            return $response;
+        }, 10, 3);
+    }
+
     /**
      * Static method to get a singleton instance
      * 

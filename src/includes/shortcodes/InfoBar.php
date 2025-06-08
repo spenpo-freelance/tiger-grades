@@ -34,7 +34,13 @@ class InfoBarShortcode {
             [],
             '0.0.1'
         );
-        add_action('wp_footer', [$this, 'output_inline_scripts']);
+        wp_enqueue_script(
+            'tigr-info-bar',
+            plugins_url('tiger-grades/js/info-bar.js', dirname(__FILE__, 3)),
+            [],
+            '0.0.1',
+            true
+        );
         // Parse shortcode attributes with defaults
         $atts = shortcode_atts([
             'type' => 'info',        // info, warning, success, error
@@ -116,27 +122,6 @@ class InfoBarShortcode {
         $output .= '</div>';
 
         return $output;
-    }
-
-    /**
-     * Output inline JavaScript for dismissible functionality
-     */
-    public function output_inline_scripts() {
-        echo '<script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".tigr-info-bar__dismiss").forEach(function(button) {
-                button.addEventListener("click", function() {
-                    const infoBar = this.closest(".tigr-info-bar");
-                    infoBar.style.transition = "opacity 0.3s ease, transform 0.3s ease";
-                    infoBar.style.opacity = "0";
-                    infoBar.style.transform = "translateX(100%)";
-                    setTimeout(function() {
-                        infoBar.remove();
-                    }, 300);
-                });
-            });
-        });
-        </script>';
     }
 }
 

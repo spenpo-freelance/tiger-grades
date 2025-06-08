@@ -575,3 +575,11 @@ dialog::backdrop {
     align-items: center;
     gap: 10px;
 }
+
+.register-welcome-header, .register-welcome-subheader {
+    text-align: center;
+}
+
+.register-welcome-subheader {
+    margin-bottom: 24px;
+}

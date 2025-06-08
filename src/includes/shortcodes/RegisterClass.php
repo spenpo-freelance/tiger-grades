@@ -9,6 +9,7 @@ use WP_Error;
 use WP_REST_Response;
 use Spenpo\TigerGrades\Utilities\DOMHelper;
 use Spenpo\TigerGrades\Components\GeneralComponents;
+use Spenpo\TigerGrades\Utilities\LanguageManager;
 
 /**
  * Handles the [tigr_report_card] shortcode functionality.
@@ -20,6 +21,8 @@ class RegisterClassShortcode {
     /** @var TeachersAPI Instance of the Teachers API */
     private $api;
     private $classRepository;
+    private $plugin_domain;
+    private $language_manager;
     /**
      * Constructor initializes the API connection and registers the shortcode.
      */
@@ -27,6 +30,8 @@ class RegisterClassShortcode {
     public function __construct() {
         $this->api = $this->getAPI();
         $this->classRepository = new TigerClassRepository();
+        $this->language_manager = LanguageManager::getInstance();
+        $this->plugin_domain = $this->language_manager->getPluginDomain();
         // Define default attributes for the shortcode
         add_shortcode('tigr_register_class', function($atts) {
             // Merge user attributes with defaults
@@ -64,7 +69,7 @@ class RegisterClassShortcode {
         $root->setAttribute('data-class-id', $atts['class_id']);
         $dom->appendChild($root);
 
-        $header = DOMHelper::createElement($dom, 'h2', 'register-class-header', null, 'Register a new class');
+        $header = DOMHelper::createElement($dom, 'h2', 'register-class-header', null, __('Register a new class', $this->plugin_domain));
         $root->appendChild($header);
 
         if (!$user_id) {
@@ -73,28 +78,28 @@ class RegisterClassShortcode {
         }
 
         $create_class_form = DOMHelper::createElement($dom, 'form', 'create-class-form', null, null, [
-            'action' => '/wp-json/tiger-grades/v1/create-class', 
+            'action' => '/wp-json/tiger-grades/v1/create-class?lang=' . $this->language_manager->getCurrentLanguage(), 
             'method' => 'POST'
         ]);
         $title_container = DOMHelper::createElement($dom, 'div', 'form-group');
-        $title_container->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, 'Title', [
+        $title_container->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, __('Title', $this->plugin_domain), [
             'for' => 'title'
         ]));
         $title_container->appendChild(DOMHelper::createElement($dom, 'input', 'form-control', null, null, [
             'type' => 'text',
             'name' => 'title',  // Add name attribute
-            'placeholder' => 'Enter the title of the class',
+            'placeholder' => __('Enter the title of the class', $this->plugin_domain),
             'required' => 'required',
             'maxlength' => '45'
         ]));
         $create_class_form->appendChild($title_container);
 
         $description_container = DOMHelper::createElement($dom, 'div', 'form-group');
-        $description_container->appendChild($this->formLabelWithSubtitle($dom, 'Description', '(This will be shown to everyone who has your enrollment code)'));
+        $description_container->appendChild($this->formLabelWithSubtitle($dom, __('Description', $this->plugin_domain), __('(This will be shown to everyone who has your enrollment code)', $this->plugin_domain)));
         $description_container->appendChild(DOMHelper::createElement($dom, 'input', 'form-control', null, null, [
             'type' => 'text',
             'name' => 'description',
-            'placeholder' => 'Enter a short description of the class',
+            'placeholder' => __('Enter a short description of the class', $this->plugin_domain),
             'required' => 'required',
             'maxlength' => '240'
         ]));
@@ -104,26 +109,26 @@ class RegisterClassShortcode {
         
         // Start Date
         $start_date_wrapper = DOMHelper::createElement($dom, 'div', 'form-field');
-        $start_date_wrapper->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, 'Start Date', [
+        $start_date_wrapper->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, __('Start Date', $this->plugin_domain), [
             'for' => 'start_date'
         ]));
         $start_date_wrapper->appendChild(DOMHelper::createElement($dom, 'input', 'form-control', null, null, [
             'type' => 'date',
             'name' => 'start_date',
-            'placeholder' => 'Enter the start date of the class',
+            'placeholder' => __('Enter the start date of the class', $this->plugin_domain),
             'required' => 'required'
         ]));
         $class_dates_container->appendChild($start_date_wrapper);
         
         // End Date
         $end_date_wrapper = DOMHelper::createElement($dom, 'div', 'form-field');
-        $end_date_wrapper->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, 'End Date', [
+        $end_date_wrapper->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, __('End Date', $this->plugin_domain), [
             'for' => 'end_date'
         ]));
         $end_date_wrapper->appendChild(DOMHelper::createElement($dom, 'input', 'form-control', null, null, [
             'type' => 'date',
             'name' => 'end_date',
-            'placeholder' => 'Enter the end date of the class',
+            'placeholder' => __('Enter the end date of the class', $this->plugin_domain),
             'required' => 'required'
         ]));
         $class_dates_container->appendChild($end_date_wrapper);
@@ -131,7 +136,7 @@ class RegisterClassShortcode {
 
         $class_types = $this->classRepository->getClassTypes();
         $class_type_selection_container = DOMHelper::createElement($dom, 'div', 'class-type-selection-container form-group');
-        $create_class_form->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, 'Class Type', [
+        $create_class_form->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, __('Class Type', $this->plugin_domain), [
             'for' => 'class_type'
         ]));
         foreach ($class_types as $class_type) {
@@ -157,14 +162,14 @@ class RegisterClassShortcode {
                 'height' => '150'
             ]);
             $class_type_container->appendChild($class_type_image);
-            $class_type_container->appendChild(DOMHelper::createElement($dom, 'div', 'class-type-selection-container-item-title', null, $class_type->title));
+            $class_type_container->appendChild(DOMHelper::createElement($dom, 'div', 'class-type-selection-container-item-title', null, __($class_type->title, $this->plugin_domain)));
             $class_type_selection_container->appendChild($class_type_container);
         }
         $create_class_form->appendChild($class_type_selection_container);
 
         $class_size_container = DOMHelper::createElement($dom, 'div', 'form-group flexbox');
         $estimated_class_size_container = DOMHelper::createElement($dom, 'div', 'form-field flexbox column between');
-        $estimated_class_size_container->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, 'Estimated Class Size', [
+        $estimated_class_size_container->appendChild(DOMHelper::createElement($dom, 'label', 'form-label', null, __('Estimated Class Size', $this->plugin_domain), [
             'for' => 'num_students'
         ]));
         $estimated_class_size_select = DOMHelper::createElement($dom, 'select', 'form-control', null, null, [
@@ -183,7 +188,7 @@ class RegisterClassShortcode {
         $class_size_container->appendChild($estimated_class_size_container);
 
         $estimated_number_categories_container = DOMHelper::createElement($dom, 'div', 'form-field');
-        $estimated_number_categories_container->appendChild($this->formLabelWithSubtitle($dom, 'Estimated Number of Categories', '(ie. tests, quizzes, homework, etc.)'));
+        $estimated_number_categories_container->appendChild($this->formLabelWithSubtitle($dom, __('Estimated Number of Categories', $this->plugin_domain), __('(ie. tests, quizzes, homework, etc.)', $this->plugin_domain)));
         $estimated_number_categories_select = DOMHelper::createElement($dom, 'select', 'form-control', null, null, [
             'name' => 'num_categories',
             'id' => 'num_categories',
@@ -201,17 +206,17 @@ class RegisterClassShortcode {
         $create_class_form->appendChild($class_size_container);
 
         $additional_info_container = DOMHelper::createElement($dom, 'div', 'form-group');
-        $additional_info_container->appendChild($this->formLabelWithSubtitle($dom, 'Anything else we should know?', '(We read this, but it won\'t be shown to anyone else)'));
+        $additional_info_container->appendChild($this->formLabelWithSubtitle($dom, __('Anything else we should know?', $this->plugin_domain), __('(We read this, but it won\'t be shown to anyone else)', $this->plugin_domain)));
         $additional_info_container->appendChild(DOMHelper::createElement($dom, 'textarea', 'form-control', null, null, [
             'name' => 'message',
-            'placeholder' => 'Enter any additional information about your class',
+            'placeholder' => __('Enter any additional information about your class', $this->plugin_domain),
             'rows' => '4',
             'maxlength' => '480'
         ]));
         $create_class_form->appendChild($additional_info_container);
 
         $submit_container = DOMHelper::createElement($dom, 'div', 'form-group submit-enroll');
-        $form_submit = DOMHelper::createElement($dom, 'input', 'btn btn-theme-primary', null, null, ['type' => 'submit']);
+        $form_submit = DOMHelper::createElement($dom, 'input', 'btn btn-theme-primary', null, null, ['type' => 'submit', 'value' => __('Submit', $this->plugin_domain)]);
         $loading_small = DOMHelper::createElement($dom, 'div', 'loading-element');
         $submit_container->appendChild($form_submit);
         $loading_container = DOMHelper::createElement($dom, 'div', 'loading-container');
