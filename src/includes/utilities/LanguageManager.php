@@ -79,6 +79,13 @@ class LanguageManager {
         ];
 
         $this->translation_strings = [
+            [
+                'key' => 'tiger_grades',
+                'translations' => [
+                    'en' => 'Tiger Grades',
+                    'zh' => '虎跃成绩',
+                ]
+            ],
             // shortcodes/Version.php
             [
                 'key' => 'tiger_grades_version',
@@ -779,11 +786,12 @@ class LanguageManager {
                     'zh' => '以下班级已创建',
                 ]
             ],
+            // shortcodes/Registration.php
             [
                 'key' => 'welcome_to_tiger_grades',
                 'translations' => [
                     'en' => 'Welcome to Tiger Grades',
-                    'zh' => '欢迎使用 Tiger Grades',
+                    'zh' => '欢迎使用虎跃成绩',
                 ]
             ],
             [
