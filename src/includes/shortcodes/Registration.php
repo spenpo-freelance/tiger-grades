@@ -78,7 +78,7 @@ class RegistrationShortcode {
             'tiger-grades-user-registration',
             plugins_url('tiger-grades/js/user-registration.js', dirname(__FILE__, 3)),
             array('jquery'),
-            '1.0.2',
+            '1.0.3',
             true
         );
         wp_localize_script(
