@@ -336,6 +336,13 @@ class LanguageManager {
                 ]
             ],
             [
+                'key' => 'message_from_parent',
+                'translations' => [
+                    'en' => 'Message from parent',
+                    'zh' => '家长留言',
+                ]
+            ],
+            [
                 'key' => 'approve_enrollment',
                 'translations' => [
                     'en' => 'Approve enrollment',
