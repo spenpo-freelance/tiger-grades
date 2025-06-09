@@ -118,7 +118,7 @@ class TeacherComponents {
         if (empty($classes)) {
             $row = DOMHelper::createElement($dom, 'tr', 'classes-table-row');
             $tbody->appendChild($row);
-            $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell empty-state-message', null, 'No classes found.', ['colspan' => '5']);
+            $titleCell = DOMHelper::createElement($dom, 'td', 'classes-table-title-cell empty-state-message', null, __('No classes found', $this->plugin_domain) . '.', ['colspan' => '5']);
             $row->appendChild($titleCell);
         } else {
             foreach ($classes as $class) {

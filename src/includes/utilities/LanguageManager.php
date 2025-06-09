@@ -243,6 +243,13 @@ class LanguageManager {
                     'zh' => '关闭',
                 ]
             ],
+            [
+                'key' => 'no_classes_found',
+                'translations' => [
+                    'en' => 'No classes found',
+                    'zh' => '没有找到班级',
+                ]
+            ],
             // shortcodes/ClassManagement.php
             [
                 'key' => 'enrollments',

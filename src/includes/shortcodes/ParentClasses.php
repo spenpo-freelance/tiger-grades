@@ -116,7 +116,7 @@ class ParentClassesShortcode {
             }
         } else {
             $no_classes_message = DOMHelper::createElement($dom, 'div', 'no-classes-message');
-            $no_classes_message->appendChild(DOMHelper::createElement($dom, 'span', 'no-classes-message-text', null, 'No classes found'));
+            $no_classes_message->appendChild(DOMHelper::createElement($dom, 'span', 'no-classes-message-text', null, __('No classes found', $this->plugin_domain)));
             $root->appendChild($no_classes_message);
         }
         
