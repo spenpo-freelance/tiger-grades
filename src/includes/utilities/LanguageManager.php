@@ -992,7 +992,7 @@ class LanguageManager {
         }
         
         // Set the language in Polylang if valid
-        if ($lang && function_exists('PLL')) {
+        if ($lang && function_exists('PLL') && function_exists('pll_languages_list')) {
             $available_languages = pll_languages_list();
             if (in_array($lang, $available_languages)) {
                 PLL()->curlang = PLL()->model->get_language($lang);
@@ -1000,7 +1000,7 @@ class LanguageManager {
                 switch_to_locale(PLL()->curlang->locale);
                 
                 // Reload text domain for the new locale
-                $this->reloadTextDomain();
+                $this->reloadTextDomain($lang);
             }
         }
     }
@@ -1010,26 +1010,21 @@ class LanguageManager {
      * 
      * @return void
      */
-    public function reloadTextDomain() {
+    public function reloadTextDomain($lang = null) {
+        if ($lang === null) {
+            $lang = $this->defaultLanguage;
+        }
+        
         // Unload existing text domain
         if (is_textdomain_loaded($this->plugin_domain)) {
             unload_textdomain($this->plugin_domain);
         }
         
-        // Load text domain for current locale
-        $locale = get_locale();
-        $lang_code = substr($locale, 0, 2); // Extract just the language code (e.g., 'zh' from 'zh_CN')
-        
-        // Try full locale first (e.g., zh_CN)
-        $mofile_full = WP_CONTENT_DIR . '/languages/plugins/' . $this->plugin_domain . '-' . $locale . '.mo';
-        
         // Then try just language code (e.g., zh)
-        $mofile_lang = WP_CONTENT_DIR . '/languages/plugins/' . $this->plugin_domain . '-' . $lang_code . '.mo';
+        $mofile = WP_CONTENT_DIR . '/languages/plugins/' . $this->plugin_domain . '-' . $lang . '.mo';
         
-        if (file_exists($mofile_full)) {
-            load_textdomain($this->plugin_domain, $mofile_full);
-        } elseif (file_exists($mofile_lang)) {
-            load_textdomain($this->plugin_domain, $mofile_lang);
+        if (file_exists($mofile)) {
+            load_textdomain($this->plugin_domain, $mofile);
         }
     }
 
