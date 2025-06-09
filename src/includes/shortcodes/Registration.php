@@ -16,6 +16,7 @@ class RegistrationShortcode {
     private $text_translations;
     private $generalRepository;
     private $api;
+    private $language_manager;
     private $plugin_domain;
     /**
      * Constructor initializes and registers the shortcode.
@@ -23,7 +24,8 @@ class RegistrationShortcode {
     public function __construct() {
         $this->generalRepository = new TigerGeneralRepository();
         $this->api = $this->getAPI();
-        $this->plugin_domain = LanguageManager::getInstance()->getPluginDomain();
+        $this->language_manager = LanguageManager::getInstance();
+        $this->plugin_domain = $this->language_manager->getPluginDomain();
         // Register the shortcode
         add_shortcode('tigr_registration', [$this, 'render']);
     }
@@ -60,12 +62,15 @@ class RegistrationShortcode {
         $root->appendChild($form_control);
         
         $form_container = DOMHelper::createElement($dom, 'div', 'registration-form-container');
-        $temp = new DOMDocument();
+        
+        // Use the GeneralAPI convenience method for UTF-8 compatible shortcode rendering
         $user_registration_id = $this->generalRepository->getUserRegistrationFormId('subscriber');
         $teacher_registration_id = $this->generalRepository->getUserRegistrationFormId('teacher');
-        @$temp->loadHTML(do_shortcode('[user_registration_form id="'.$user_registration_id.'"]'), LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
-        $node = $dom->importNode($temp->documentElement, true);
-        $form_container->appendChild($node);
+        
+        // Render and append the shortcode with proper UTF-8 support
+        $shortcode = '[user_registration_form id="'.$user_registration_id.'"]';
+        $this->api->appendShortcodeWithUTF8Support($dom, $form_container, $shortcode);
+        
         $root->appendChild($form_container);
 
         // Enqueue the JavaScript
@@ -82,7 +87,8 @@ class RegistrationShortcode {
             array(
                 'teacher_form_id' => $teacher_registration_id,
                 'user_form_id' => $user_registration_id,
-                'ajax_url' => rest_url('tiger-grades/v1/shortcode')
+                'ajax_url' => rest_url('tiger-grades/v1/shortcode'),
+                'language' => $this->language_manager->getCurrentLanguage()
             )
         );
         

@@ -53,7 +53,8 @@ jQuery(document).ready(function($) {
             url: tigr_ajax_object.ajax_url,
             type: 'POST',
             data: { 
-                shortcode: formShortcode
+                shortcode: formShortcode,
+                lang: tigr_ajax_object.language
             },
             success: function(response) {
                 console.log('Form fetched:', formId, response); // Debug log
