@@ -106,19 +106,23 @@ class TigerClassRepository {
     /**
      * Teachers can view all enrollments for a class.
      * 
+     * @param int $class_id The ID of the class
+     * @param int $user_id The ID of the teacher
      * @return array Array of text section objects
      * @throws Exception When database error occurs
      */
-    public function getClassEnrollments($class_id) {
+    public function getClassEnrollments($class_id, $user_id) {
         try {
             $enrollmentQuery = $this->wpdb->prepare("
                 SELECT e.*, u.display_name as parent_name, u.user_email as parent_email
                 FROM {$this->wpdb->prefix}tigr_enrollments e
                 LEFT JOIN {$this->wpdb->prefix}users u ON e.user_id = u.ID
+                LEFT JOIN {$this->wpdb->prefix}tigr_classes c ON e.class_id = c.id
                 WHERE e.class_id = %d
+                AND c.teacher = %d
                 -- AND e.status = 'pending'
                 ORDER BY e.updated DESC
-            ", $class_id);
+            ", $class_id, $user_id);
             
             $results = $this->wpdb->get_results($enrollmentQuery);
             

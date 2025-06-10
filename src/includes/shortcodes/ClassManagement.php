@@ -182,7 +182,7 @@ class ClassManagementShortcode {
         }
 
         $class_id = get_query_var('class_id');
-        $enrollments = $this->classRepository->getClassEnrollments($class_id);
+        $enrollments = $this->classRepository->getClassEnrollments($class_id, $user_id);
         if (count($enrollments) > 0) {
             $this->renderEnrollmentTable($dom, $enrollments, $enrollment_table);
             
