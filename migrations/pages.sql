@@ -866,7 +866,16 @@ CALL create_pll_link(
 
 -- Register as a teacher /register/teacher
 -- form id (User Registration plugin)
-SELECT `post_id` INTO @user_register_form_id FROM `wp_postmeta` WHERE `meta_key` = 'user_registration_form_setting_default_user_role' AND `meta_value` = 'teacher';
+
+SELECT p.ID 
+INTO @user_register_form_id 
+FROM `wp_posts` p 
+LEFT JOIN `wp_postmeta` pmdf ON p.ID = pmdf.post_id AND pmdf.meta_key = 'user_registration_form_setting_default_user_role' 
+LEFT JOIN `wp_postmeta` pmcc ON p.ID = pmcc.post_id AND pmcc.meta_key = 'user_registration_form_custom_class' 
+WHERE p.post_type = 'user_registration'
+AND p.post_status = 'publish'
+AND pmdf.meta_value = 'teacher'
+AND pmcc.meta_value = 'lang-en';
 
 CALL create_or_update_page(
     'Register as a Teacher',
@@ -881,6 +890,16 @@ CALL create_or_update_page(
     'closed',
     @en_id
 );
+
+SELECT p.ID 
+INTO @user_register_form_id 
+FROM `wp_posts` p 
+LEFT JOIN `wp_postmeta` pmdf ON p.ID = pmdf.post_id AND pmdf.meta_key = 'user_registration_form_setting_default_user_role' 
+LEFT JOIN `wp_postmeta` pmcc ON p.ID = pmcc.post_id AND pmcc.meta_key = 'user_registration_form_custom_class' 
+WHERE p.post_type = 'user_registration'
+AND p.post_status = 'publish'
+AND pmdf.meta_value = 'teacher'
+AND pmcc.meta_value = 'lang-zh';
 
 -- Mandarin Register as a teacher
 CALL create_or_update_page(
@@ -904,7 +923,16 @@ CALL create_pll_link(
 
 -- Register as a parent /register/parent
 -- form id (User Registration plugin)
-SELECT `post_id` INTO @user_register_form_id FROM `wp_postmeta` WHERE `meta_key` = 'user_registration_form_setting_default_user_role' AND `meta_value` = 'subscriber';
+
+SELECT p.ID 
+INTO @user_register_form_id 
+FROM `wp_posts` p 
+LEFT JOIN `wp_postmeta` pmdf ON p.ID = pmdf.post_id AND pmdf.meta_key = 'user_registration_form_setting_default_user_role' 
+LEFT JOIN `wp_postmeta` pmcc ON p.ID = pmcc.post_id AND pmcc.meta_key = 'user_registration_form_custom_class' 
+WHERE p.post_type = 'user_registration'
+AND p.post_status = 'publish'
+AND pmdf.meta_value = 'subscriber'
+AND pmcc.meta_value = 'lang-en';
 
 CALL create_or_update_page(
     'Register as a Parent',
@@ -919,6 +947,16 @@ CALL create_or_update_page(
     'closed',
     @en_id
 );
+
+SELECT p.ID 
+INTO @user_register_form_id 
+FROM `wp_posts` p 
+LEFT JOIN `wp_postmeta` pmdf ON p.ID = pmdf.post_id AND pmdf.meta_key = 'user_registration_form_setting_default_user_role' 
+LEFT JOIN `wp_postmeta` pmcc ON p.ID = pmcc.post_id AND pmcc.meta_key = 'user_registration_form_custom_class' 
+WHERE p.post_type = 'user_registration'
+AND p.post_status = 'publish'
+AND pmdf.meta_value = 'subscriber'
+AND pmcc.meta_value = 'lang-zh';
 
 -- Mandarin Register as a parent
 CALL create_or_update_page(

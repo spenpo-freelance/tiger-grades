@@ -184,8 +184,9 @@ class GeneralAPI {
         
         // Optional: Validate form IDs if you want to restrict to specific forms
         $allowed_form_ids = []; // Your known registration form IDs
-        $allowed_form_ids[] = $this->generalRepository->getUserRegistrationFormId('subscriber');
-        $allowed_form_ids[] = $this->generalRepository->getUserRegistrationFormId('teacher');
+        $allowed_form_ids = array_merge($allowed_form_ids, $this->generalRepository->getUserRegistrationFormIds('subscriber'));
+        $allowed_form_ids = array_merge($allowed_form_ids, $this->generalRepository->getUserRegistrationFormIds('teacher'));
+        error_log(print_r($allowed_form_ids, true));
         if (!in_array($matches[1], $allowed_form_ids)) {
             return new WP_Error(
                 'invalid_form_id',

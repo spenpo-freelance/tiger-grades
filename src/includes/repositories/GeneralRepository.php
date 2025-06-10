@@ -25,16 +25,18 @@ class TigerGeneralRepository {
      * Get the users who are allowed to access a given secured route.
      * 
      * @param string $route The route to check access for.
-     * @return array Array of user IDs who are allowed to access the route.
+     * @return array Array of user registration form IDs.
      * @throws Exception When database error occurs
      */
-    public function getUserRegistrationFormId($user_role) {
+    public function getUserRegistrationFormIds($user_role) {
         try {
             $allowedQuery = $this->wpdb->prepare(
-                "SELECT `post_id`
-                 FROM `wp_postmeta` 
-                 WHERE `meta_key` = 'user_registration_form_setting_default_user_role' 
-                 AND `meta_value` = %s",
+                "SELECT p.ID
+                 FROM `wp_posts` p
+                 LEFT JOIN `wp_postmeta` pmdf ON p.ID = pmdf.post_id AND pmdf.meta_key = 'user_registration_form_setting_default_user_role' 
+                 WHERE p.post_type = 'user_registration'
+                 AND p.post_status = 'publish'
+                 AND pmdf.meta_value = %s",
                 $user_role
             );
             
@@ -44,7 +46,41 @@ class TigerGeneralRepository {
                 throw new Exception($this->wpdb->last_error);
             }
             
-            return $results[0]->post_id;
+            return array_column($results, 'ID');
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Get the users who are allowed to access a given secured route.
+     * 
+     * @param string $route The route to check access for.
+     * @return int The ID of the user registration form.
+     * @throws Exception When database error occurs
+     */
+    public function getUserRegistrationFormId($user_role, $class_id) {
+        try {
+            $allowedQuery = $this->wpdb->prepare(
+                "SELECT p.ID
+                 FROM `wp_posts` p
+                 LEFT JOIN `wp_postmeta` pmdf ON p.ID = pmdf.post_id AND pmdf.meta_key = 'user_registration_form_setting_default_user_role' 
+                 LEFT JOIN `wp_postmeta` pmcc ON p.ID = pmcc.post_id AND pmcc.meta_key = 'user_registration_form_custom_class' 
+                 WHERE p.post_type = 'user_registration'
+                 AND p.post_status = 'publish'
+                 AND pmdf.meta_value = %s
+                 AND pmcc.meta_value = %s",
+                $user_role,
+                $class_id
+            );
+            
+            $results = $this->wpdb->get_results($allowedQuery);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+            
+            return $results[0]->ID;
         } catch (Exception $e) {
             throw $e;
         }
