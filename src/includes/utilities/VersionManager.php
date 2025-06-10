@@ -7,11 +7,16 @@
  */
 namespace Spenpo\TigerGrades\Utilities;
 
+use Spenpo\TigerGrades\Utilities\StringTranslationsManager;
+use Spenpo\TigerGrades\Utilities\LanguageManager;
+
 class VersionManager {
     /**
      * The option name used to store the database version
      */
     const DB_VERSION_OPTION = 'tigr_db_version';
+    private $translation_strings;
+    private $translator;
     
     /**
      * Constructor that automatically checks and syncs the version
@@ -19,6 +24,9 @@ class VersionManager {
     public function __construct() {
         // Add an action to check and sync the version on init
         add_action('init', [$this, 'checkAndSyncVersion']);
+        $languageConstants = LanguageManager::getInstance();
+        $this->translation_strings = $languageConstants->translation_strings;
+        $this->translator = new StringTranslationsManager();
     }
     
     /**
@@ -28,6 +36,9 @@ class VersionManager {
         if (self::needsUpdate()) {
             // Always sync the version
             self::syncWithPluginVersion();
+            
+            // Register string translations
+            $this->translator->add_translations($this->translation_strings);
         }
     }
     

@@ -10,6 +10,7 @@ use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 use Spenpo\TigerGrades\Services\MicrosoftAuthService;
 use Spenpo\TigerGrades\Services\HttpService;
 use Spenpo\TigerGrades\Utilities\SecurityManager;
+use Spenpo\TigerGrades\Utilities\LanguageManager;
 /**
  * Handles all TigerGrades API functionality and route registration.
  * 
@@ -26,6 +27,8 @@ class TeachersAPI {
     private $classRepository;
     private $httpService;
     private $securityManager;
+    private $plugin_domain;
+    private $languageManager;
     /**
      * Private constructor to prevent direct instantiation.
      * Use getInstance() instead.
@@ -35,8 +38,10 @@ class TeachersAPI {
         $this->securityManager = new SecurityManager();
         $this->auth_service = new MicrosoftAuthService('tigr_functions');
         $this->httpService = HttpService::getInstance();
+        $this->languageManager = LanguageManager::getInstance();
         $this->register_routes();
         $this->api_errors = array();
+        $this->plugin_domain = $this->languageManager->getPluginDomain();
     }
 
     /**
@@ -57,6 +62,9 @@ class TeachersAPI {
      * @return void
      */
     public function register_routes() {
+        // Register language detection for tiger-grades API namespace
+        $this->languageManager->registerRestApiLanguageDetection('tiger-grades');
+        
         add_action('rest_api_init', function() {
             register_rest_route('tiger-grades/v1', '/create-class', [
                 'methods' => 'POST',
@@ -143,6 +151,21 @@ class TeachersAPI {
                     ]
                 ]
             ]);
+            register_rest_route('tiger-grades/v1', '/reject-enrollment', [
+                'methods' => 'POST',
+                'callback' => [$this, 'handle_reject_enrollment_request'],
+                'permission_callback' => function() {
+                    $user = wp_get_current_user();
+                    $can_access = is_user_logged_in() && in_array('teacher', (array) $user->roles);
+                    return $can_access;
+                },
+                'args' => [
+                    'enrollment_id' => [
+                        'required' => true,
+                        'type' => 'string'
+                    ]
+                ]
+            ]);
             register_rest_route('tiger-grades/v1', '/update-class', [
                 'methods' => 'POST',
                 'callback' => [$this, 'handle_update_class_request'],
@@ -219,13 +242,33 @@ class TeachersAPI {
      * @param \WP_REST_Request $request The request object
      * @return \WP_REST_Response The response object
      */
+    public function handle_reject_enrollment_request($request) {
+        $user_id = get_current_user_id();
+        $enrollment_id = $request->get_param('enrollment_id');
+        $data = $this->classRepository->rejectEnrollment($enrollment_id);
+        $response = [
+            'success' => $this->api_errors ? false : true,
+            'data' => $data,
+            'errors' => $this->api_errors
+        ];
+        
+        return new WP_REST_Response($response, $this->api_errors ? 500 : 200);
+    }
+
+    /**
+     * Handles the report card REST API request.
+     * 
+     * @param \WP_REST_Request $request The request object
+     * @return \WP_REST_Response The response object
+     */
     public function handle_create_enrollment_request($request) {
         $user_id = get_current_user_id();
         $enrollment_code = $request->get_param('enrollment_code');
         $student_name = $request->get_param('student_name');
         $optional_message = $request->get_param('optional_message');
         $class = $this->classRepository->getClassByEnrollmentCode($enrollment_code);
-        $data = $this->classRepository->createEnrollment($class[0]->id, $user_id, $student_name, $optional_message);
+        $data = $this->classRepository->createEnrollment($class->id, $user_id, $student_name, $optional_message);
+        $data->message = __('Successfully enrolled in class', $this->plugin_domain) . ': ' . $class->title;
         $response = [
             'success' => $this->api_errors ? false : true,
             'data' => $data,
@@ -338,6 +381,7 @@ class TeachersAPI {
         $start_date = $request->get_param('start_date');
         $end_date = $request->get_param('end_date');
         $data = $this->create_class($title, $user_id, $type, $num_students, $num_categories, $description, $message, $start_date, $end_date);
+        $data->message = __('The following class has been created', $this->plugin_domain) . ': ' . $data->title;
         $response['data'] = $data;
 
         if (empty($this->api_errors)) {

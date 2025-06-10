@@ -8,6 +8,7 @@ use WP_REST_Response;
 use Spenpo\TigerGrades\Utilities\DOMHelper;
 use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 use Spenpo\TigerGrades\Components\TeacherComponents;
+use Spenpo\TigerGrades\Components\GeneralComponents;
 /**
  * Handles the [tigr_report_card] shortcode functionality.
  * 
@@ -50,19 +51,15 @@ class TeacherDashboardShortcode {
         $root = DOMHelper::createElement($dom, 'div', 'teacher-dashboard-container');
         $dom->appendChild($root);
 
-        if ($user_id) {
-            $teacherComponents = new TeacherComponents();
-            $root->appendChild($teacherComponents->createClassesTable($dom, $user_id));
-
-            return $dom->saveHTML();
-        } else {
-            $not_logged_in_message = DOMHelper::createElement($dom, 'div', 'not-logged-in-message');
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, 'Please '));
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'a', 'not-logged-in-message-text', null, 'log in', ['href' => '/my-account']));
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, ' to view your child\'s grades.'));
-            $root->appendChild($not_logged_in_message);
-            return $dom->saveHTML();
+        if (!$user_id) {
+            $generalComponents = new GeneralComponents();
+            return $generalComponents->createUnauthenticatedMessage($dom, $root);
         }
+
+        $teacherComponents = new TeacherComponents();
+        $root->appendChild($teacherComponents->createClassesTable($dom, $user_id));
+
+        return $dom->saveHTML();
     }
 }
 

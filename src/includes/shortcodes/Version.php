@@ -2,6 +2,7 @@
 namespace Spenpo\TigerGrades\Shortcodes;
 
 use Spenpo\TigerGrades\Utilities\VersionManager;
+use Spenpo\TigerGrades\Utilities\LanguageManager;
 
 /**
  * Handles the [tigr_version] shortcode functionality.
@@ -10,21 +11,16 @@ use Spenpo\TigerGrades\Utilities\VersionManager;
  * @since 0.0.3
  */
 class VersionShortcode {
-    private $text_translations;
+    private $plugin_domain;
+    
     /**
      * Constructor initializes and registers the shortcode.
      */
     public function __construct() {
+        $languageConstants = LanguageManager::getInstance();
+        $this->plugin_domain = $languageConstants->getPluginDomain();
         // Register the shortcode
         add_shortcode('tigr_version', [$this, 'render']);
-        $this->text_translations = [
-            'en' => [
-                'version' => 'Version',
-            ],
-            'zh' => [
-                'version' => '版本',
-            ],
-        ];
     }
 
     /**
@@ -37,10 +33,11 @@ class VersionShortcode {
         // Get the database version using the VersionManager
         $db_version = VersionManager::getCurrentVersion();
 
-        $lang = pll_current_language();
+        // Get the translated string from Polylang
+        $version_text = function_exists('__') ? __('Version', $this->plugin_domain) : 'Version';
         
         // Return the formatted version
-        return '<div class="tiger-version">APP ' . $this->text_translations[$lang]['version'] . ': ' . esc_html($db_version) . '</div>';
+        return '<div class="tiger-version">APP ' . esc_html($version_text) . ': ' . esc_html($db_version) . '</div>';
     }
 }
 

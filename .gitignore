@@ -1,5 +1,6 @@
 *.env
 bench
+info-bars
 /*.sql*
 setup-dev.sh
 scripts/*.php
