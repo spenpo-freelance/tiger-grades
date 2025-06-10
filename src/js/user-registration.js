@@ -92,6 +92,9 @@ jQuery(document).ready(function($) {
                     .then(() => {
                         const scriptElement = document.createElement('script');
                         scriptElement.src = script.src;
+                        if (script.handle === 'ur-recaptcha-hcaptcha') {
+                            scriptElement.src += '&hl=' + tigr_ajax_object.language;
+                        }
                         scriptElement.setAttribute('data-dynamic', 'true');
                         scriptElement.onload = () => {
                             loadedScripts.add(script.handle);

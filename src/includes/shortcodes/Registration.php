@@ -27,6 +27,7 @@ class RegistrationShortcode {
         $this->language_manager = LanguageManager::getInstance();
         $this->plugin_domain = $this->language_manager->getPluginDomain();
         // Register the shortcode
+        add_filter( 'wp_enqueue_scripts', [$this, 're_register_hcaptcha_script'], 20 );
         add_shortcode('tigr_registration', [$this, 'render']);
     }
 
@@ -101,6 +102,18 @@ class RegistrationShortcode {
         );
         
         return $dom->saveHTML();
+    }
+    
+    public function re_register_hcaptcha_script() {
+        $language = $this->language_manager->getCurrentLanguage();
+        wp_deregister_script('ur-recaptcha-hcaptcha');
+            
+        wp_register_script(
+            'ur-recaptcha-hcaptcha',
+            'https://hcaptcha.com/1/api.js?onload=onloadURCallback&render=explicit&hl=' . $language,
+            array(),
+            UR_VERSION
+        );
     }
 
     // New protected method for better testability
