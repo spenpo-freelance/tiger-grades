@@ -585,9 +585,10 @@ dialog::backdrop {
     gap: 10px;
 }
 
-.ur-submit-button {
+.ur-submit-button, .user-registration-Button {
     background-color: var(--primary) !important;
     border: none !important;
+    border-radius: 2px !important;
 }
 
 .register-welcome-header, .register-welcome-subheader {
