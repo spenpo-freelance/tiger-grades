@@ -58,7 +58,9 @@ class RegistrationShortcode {
         $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, __('Teacher', $this->plugin_domain), [
             'type' => 'button',
             'name' => 'email',
-            'data-form-id' => 'teacher'
+            'data-form-id' => 'teacher',
+            'disabled' => 'disabled',
+            'title' => __('Coming soon', $this->plugin_domain)
         ]));
         $root->appendChild($form_control);
         
@@ -90,6 +92,15 @@ class RegistrationShortcode {
             '1.0.3',
             true
         );
+
+        // Enqueue stylesheet
+        wp_enqueue_style(
+            'tiger-grades-user-registration',
+            plugins_url('tiger-grades/css/user-registration.css', dirname(__FILE__, 3)),
+            array(),
+            '1.0.3'
+        );
+
         wp_localize_script(
             'tiger-grades-user-registration',
             'tigr_ajax_object',

@@ -814,6 +814,13 @@ class LanguageManager {
                     'en' => 'Which kind of account do you need',
                     'zh' => '您需要哪种账户',
                 ]
+            ],
+            [
+                'key' => 'coming_soon',
+                'translations' => [
+                    'en' => 'Coming soon',
+                    'zh' => '即将推出',
+                ]
             ]
         ];
     }

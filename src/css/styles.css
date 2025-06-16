@@ -1,3 +1,7 @@
+:root {
+    --primary: #03c4eb;
+}
+
 .page-id-117, .parent-pageid-117 {
     --wp--style--global--content-size: 800px; /* Adjust the value as needed */
 }
@@ -145,7 +149,7 @@ p.name-in-gradebook {
 }
 
 .tabs button.active {
-    background-color: #03c4eb;
+    background-color: var(--primary);
     color: #fff;
 }
 
@@ -204,8 +208,8 @@ p.name-in-gradebook {
 .approve-dialog-confirm:hover,
 .view-message-btn:hover,
 .classes-table-manage-enrollments-button:hover {
-    background-color: #03c4eb;
-    border-color: #03c4eb;
+    background-color: var(--primary);
+    border-color: var(--primary);
     color: #fff;
     text-decoration: none;
 }
@@ -308,6 +312,11 @@ dialog::backdrop {
     color: #333;
 }
 
+.registration-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
 .registration-button:focus {
     outline: none;
 }
@@ -398,7 +407,7 @@ dialog::backdrop {
 }
 
 .class-type-selection-container-item:hover {
-    outline: 1px solid #03c4eb;
+    outline: 1px solid var(--primary);
 }
 
 .class-type-selection-container-item-image {
@@ -415,7 +424,7 @@ dialog::backdrop {
 /* Add a selected state style */
 .class-type-selection-container-item:active, 
 .class-type-selection-container-item:has(input[type="radio"]:checked) {
-    outline: 2px solid #03c4eb;
+    outline: 2px solid var(--primary);
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
@@ -488,7 +497,7 @@ dialog::backdrop {
 
 .form-control:focus {
     outline: none;
-    border-color: #03c4eb;
+    border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
 }
 
@@ -574,6 +583,11 @@ dialog::backdrop {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.ur-submit-button {
+    background-color: var(--primary) !important;
+    border: none !important;
 }
 
 .register-welcome-header, .register-welcome-subheader {
