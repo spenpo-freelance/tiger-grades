@@ -55,13 +55,18 @@ class RegistrationShortcode {
             'name' => 'email',
             'data-form-id' => 'user',
         ]));
-        $form_control->appendChild(DOMHelper::createElement($dom, 'button', 'registration-button', null, __('Teacher', $this->plugin_domain), [
+        $teacher_registration_is_enabled = $this->generalRepository->getFeatureFlag('teacher-registration-form');
+        $teacher_registration_button_title = $teacher_registration_is_enabled ? '' : __('Coming soon', $this->plugin_domain);
+        $teacher_registration_button = DOMHelper::createElement($dom, 'button', 'registration-button', null, __('Teacher', $this->plugin_domain), [
             'type' => 'button',
             'name' => 'email',
             'data-form-id' => 'teacher',
-            'disabled' => 'disabled',
-            'title' => __('Coming soon', $this->plugin_domain)
-        ]));
+            'title' => $teacher_registration_button_title
+        ]);
+        if (!$teacher_registration_is_enabled) {
+            $teacher_registration_button->setAttribute('disabled', 'disabled');
+        }
+        $form_control->appendChild($teacher_registration_button);
         $root->appendChild($form_control);
         
         $form_container = DOMHelper::createElement($dom, 'div', 'registration-form-container');

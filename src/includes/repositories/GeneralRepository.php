@@ -22,6 +22,34 @@ class TigerGeneralRepository {
     }
 
     /**
+     * Get the value of a feature flag.
+     * 
+     * @param string $name The name of the feature flag.
+        * @return bool The value of the feature flag.
+     * @throws Exception When database error occurs
+     */
+    public function getFeatureFlag($title) {
+        try {
+            $allowedQuery = $this->wpdb->prepare(
+                "SELECT *
+                 FROM `wp_tigr_feature_lookup`
+                 WHERE title = %s",
+                $title
+            );
+            
+            $results = $this->wpdb->get_results($allowedQuery);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+
+            return $results[0]->status === 'active';
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
      * Get the users who are allowed to access a given secured route.
      * 
      * @param string $route The route to check access for.
