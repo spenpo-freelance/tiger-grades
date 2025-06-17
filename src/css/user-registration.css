@@ -1,0 +1,12 @@
+
+body.user-registration-page .user-registration:not(.user-registration-MyAccount) div.ur-button-container {
+    padding: 0px;
+}
+
+.ur-frontend-form .ur-form-row .ur-form-grid.ur-grid-1 {
+    padding: 0px 10px 0px 0px !important;
+}
+
+.ur-frontend-form .ur-form-row .ur-form-grid.ur-grid-2 {
+    padding: 0px 0px 0px 10px !important;
+}

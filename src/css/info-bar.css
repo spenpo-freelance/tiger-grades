@@ -1,0 +1,132 @@
+/**
+ * Info Bar Shortcode Styles
+ * 
+ * Provides styling for the [tigr_info_bar] shortcode
+ * 
+ * @package Spenpo\TigerGrades
+ * @since 0.0.3
+ */
+
+#primary.content-area:has(.tigr-info-bar) {
+    padding-top: 0;
+}
+
+.tigr-info-bar {
+    display: flex;
+    align-items: flex-start;
+    padding: 16px;
+    margin: 16px 0;
+    border-radius: 8px;
+    border-left: 4px solid;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    position: relative;
+}
+
+.tigr-info-bar:first-of-type {
+    margin-top: 0;
+}
+
+.tigr-info-bar--info {
+    background-color: #e3f2fd;
+    border-left-color: #2196f3;
+    color: #0d47a1;
+}
+
+.tigr-info-bar--warning {
+    background-color: #fff3e0;
+    border-left-color: #ff9800;
+    color: #e65100;
+}
+
+.tigr-info-bar--success {
+    background-color: #e8f5e8;
+    border-left-color: #4caf50;
+    color: #1b5e20;
+}
+
+.tigr-info-bar--error {
+    background-color: #ffebee;
+    border-left-color: #f44336;
+    color: #c62828;
+}
+
+.tigr-info-bar__icon {
+    margin-right: 12px;
+    font-size: 18px;
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.tigr-info-bar__content {
+    flex: 1;
+}
+
+.tigr-info-bar__title {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.tigr-info-bar__text {
+    margin: 0;
+}
+
+.tigr-info-bar__text p {
+    margin: 0 0 8px 0;
+}
+
+.tigr-info-bar__text p:last-child {
+    margin-bottom: 0;
+}
+
+.tigr-info-bar__text ul {
+    list-style: disc inside;
+    margin-left: 0;
+    padding-left: 0;
+  }
+
+.tigr-info-bar__text li {
+margin-bottom: 0.5em;
+}
+
+.tigr-info-bar__text li {
+    margin: 4px 0;
+}
+
+.tigr-info-bar__text li:last-child {
+    margin-bottom: 0;
+}
+
+.tigr-info-bar__dismiss {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    margin-left: 12px;
+    border-radius: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.tigr-info-bar__dismiss:hover {
+    opacity: 1;
+}
+
+.tigr-info-bar--dismissible .tigr-info-bar__dismiss {
+    display: block;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tigr-info-bar {
+        padding: 12px;
+        margin: 12px 0;
+    }
+    
+    .tigr-info-bar__icon {
+        margin-right: 8px;
+        font-size: 16px;
+    }
+} 

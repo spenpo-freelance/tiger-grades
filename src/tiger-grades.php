@@ -5,7 +5,7 @@
  * Description:       Education intelligence for teachers, parents and teaching organizations
  * Requires at least: 6.8
  * Requires PHP:      7.2
- * Version:           0.1.0
+ * Version:           0.1.1
  * Author:            spenpo
  * License:           GPLv2 or later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
@@ -28,7 +28,14 @@ if (!defined('TIGER_GRADES_URL')) {
     define('TIGER_GRADES_URL', plugin_dir_url(__FILE__));
 }
 
+// Include autoloader
+require_once TIGER_GRADES_PATH . 'vendor/Parsedown.php';
+
 require_once TIGER_GRADES_PATH . 'includes/components/TeacherComponents.php';
+require_once TIGER_GRADES_PATH . 'includes/components/GeneralComponents.php';
+require_once TIGER_GRADES_PATH . 'includes/repositories/TranslationRepository.php';
+require_once TIGER_GRADES_PATH . 'includes/utilities/LanguageManager.php';
+require_once TIGER_GRADES_PATH . 'includes/utilities/StringTranslationsManager.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/VersionManager.php';
 require_once TIGER_GRADES_PATH . 'includes/repositories/DatabaseManager.php';
 require_once TIGER_GRADES_PATH . 'includes/repositories/TigerClassRepository.php';
@@ -50,6 +57,7 @@ require_once TIGER_GRADES_PATH . 'includes/shortcodes/ClassManagement.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/ParentClasses.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Version.php';
 require_once TIGER_GRADES_PATH . 'includes/shortcodes/Registration.php';
+require_once TIGER_GRADES_PATH . 'includes/shortcodes/InfoBar.php';
 require_once TIGER_GRADES_PATH . 'includes/utilities/RewriteManager.php';
 
 // Enqueue scripts
@@ -76,7 +84,13 @@ function enqueue_tiger_grades_styles() {
         'tiger-grades-styles',
         plugins_url('css/styles.css', __FILE__),
         array(),
-        '1.0.6'
+        '1.0.8'
     );
 }
 add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_styles');
+
+// Register string translations on plugin activation
+register_activation_hook(__FILE__, function() {
+    // Register string translations
+    Spenpo\TigerGrades\Utilities\StringTranslationsManager::registerTranslations();
+});

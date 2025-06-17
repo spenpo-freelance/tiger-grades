@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS `wp_tigr_feature_lookup`;
 DROP TABLE IF EXISTS `wp_tigr_enrollments`;
 DROP TABLE IF EXISTS `wp_tigr_classes`;
 DROP TABLE IF EXISTS `wp_tigr_class_types`;
+DROP TABLE IF EXISTS `wp_tigr_feature_flag`;
 
 -- Create tables in correct order
 -- First create tables without foreign keys
@@ -145,7 +146,9 @@ INSERT INTO `wp_tigr_feature_lookup` (`id`, `title`, `description`, `status`, `p
 (2, 'num_students', 'estimate of the number of students in the class', 'active', 1),
 (3, 'num_categories', 'estimate of the number of categories for the class', 'active', 1),
 (4, 'rest-api-routes', 'wordpress rest api routes registered by tiger grades plugin', 'active', NULL),
-(5, '/tiger-grades/v1/update-class', 'used by tiger grades azure functions microservice to update class row after remote class registration process has been completed', 'active', 4);
+(5, '/tiger-grades/v1/update-class', 'used by tiger grades azure functions microservice to update class row after remote class registration process has been completed', 'active', 4)
+(6, 'user-registration', 'enables the button for switching to the teacher registration form in the [tigr-registration] shortcode', 'active', NULL),
+(7, 'teacher-registration-form', 'enables the button for switching to the teacher registration form in the [tigr-registration] shortcode', 'active', 6);
 
 INSERT INTO `wp_tigr_range_options` (`id`, `label`, `min`, `max`, `status`) VALUES
 (1, '100+', 100, NULL, 'active'),
