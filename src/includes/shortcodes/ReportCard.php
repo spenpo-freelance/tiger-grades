@@ -7,6 +7,9 @@ use DOMElement;
 use WP_Error;
 use WP_REST_Response;
 use Spenpo\TigerGrades\Utilities\DOMHelper;
+use Spenpo\TigerGrades\Repositories\TigerClassRepository;
+use Spenpo\TigerGrades\Utilities\LanguageManager;
+use Spenpo\TigerGrades\Components\GeneralComponents;
 
 /**
  * Handles the [tigr_report_card] shortcode functionality.
@@ -17,46 +20,24 @@ use Spenpo\TigerGrades\Utilities\DOMHelper;
 class ReportCardShortcode {
     /** @var TigerGradesAPI Instance of the TigerGrades API */
     private $api;
-
+    private $classRepository;
+    private $plugin_domain;
+    private $languageManager;
+    private $general_components;
     /**
      * Constructor initializes the API connection and registers the shortcode.
      */
 
     public function __construct() {
         $this->api = $this->getAPI();
-        
+        $this->classRepository = new TigerClassRepository();
+        $this->languageManager = LanguageManager::getInstance();
+        $this->plugin_domain = $this->languageManager->getPluginDomain();
+        $this->general_components = new GeneralComponents();
         // Define default attributes for the shortcode
         add_shortcode('tigr_parent_class', function($atts) {
             return $this->render($atts);
         });
-    }
-
-    /**
-     * Gets the letter grade based on the percentage.
-     * 
-     * @param string $percentage The percentage to convert to a letter grade
-     * @return string The letter grade
-     */
-    private function getLetterGrade($percentage) {
-        if ($percentage >= 90) {
-            return 'A';
-        } elseif ($percentage >= 80) {
-            return 'B';
-        } elseif ($percentage >= 70) {
-            return 'C';
-        } else {
-            return 'D';
-        }
-    }
-
-    private function processScore($score) {
-        if ($score == '0') {
-            return '00';
-        } elseif ($score == 'e') {
-            return 'EXEMPT';
-        } else {
-            return $score;
-        }
     }
 
     /**
@@ -82,109 +63,85 @@ class ReportCardShortcode {
         $root->setAttribute('data-is-teacher', $is_teacher);
         $dom->appendChild($root);
 
-        if ($user_id) {
-            $loading = DOMHelper::createElement($dom, 'div', 'loading-message');
-            $loading->appendChild(DOMHelper::createElement($dom, 'p', 'loading-text', null, 'Loading content...'));
-            $root->appendChild($loading);
+        if (!$user_id) {
+            return $this->general_components->createUnauthenticatedMessage($dom, $root);
+        }
 
-            // Enqueue the JavaScript
-            wp_enqueue_script(
-                'tiger-grades-report-card',
-                plugins_url('tiger-grades/js/report-card.js', dirname(__FILE__, 3)),
-                array('jquery'),
-                '1.0.8',
-                true
-            );
+        if ($is_teacher) {
+            $this->renderReportCardUI($dom, $root);
+        }
 
-            // Localize the script with necessary data
-            wp_localize_script('tiger-grades-report-card', 'tigerGradesData', array(
-                'apiUrl' => rest_url('tiger-grades/v1/report-card'),
-                'metadataUrl' => rest_url('tiger-grades/v1/class-metadata'),
-                'nonce' => wp_create_nonce('wp_rest')
-            ));
-
-            return $dom->saveHTML();
-
-            // Get data using the singleton instance
-            // $report_card = $this->api->fetchReportCard($user_id, 'date', $atts['type'], $atts['class_id']);
-
-            // $student_name = $report_card->name;
-
-            // $student_name_container = $this->createElement($dom, 'div', 'student-name-container');
-            // $student_name_container->appendChild($this->createElement($dom, 'div', 'student-name', null, $student_name));
-            // $root->appendChild($student_name_container);
-
-            // if ($atts['type'] == 'all') {
-            //     $average_container = $this->createElement($dom, 'div', 'average-container');
-            //     $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Overall Grade: " . $report_card->avg->final));
-            //     $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Letter Grade: " . $this->getLetterGrade((float)$report_card->avg->final)));
-            //     $root->appendChild($average_container);
-            // } else {
-            //     $average_container = $this->createElement($dom, 'div', 'average-container');
-            //     $average_container->appendChild($this->createElement($dom, 'h4', 'average', null, "Average: " . $report_card->avg->{$atts['type']}));
-            //     $root->appendChild($average_container);
-            // }
-
-            // $grade_table = $this->createElement($dom, 'table', 'grade-table');
-            // $root->appendChild($grade_table);
-            
-            // $grade_table_header = $this->createElement($dom, 'thead', 'grade-table-header');
-            // $grade_table_header->appendChild($this->createElement($dom, 'tr', 'grade-table-header-row'));
-            // $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Date'));
-            // $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Assignment'));
-            // if ($atts['type'] == 'all') {
-            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Type'));
-            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Percentage'));
-            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Letter Grade'));
-            // } else {
-            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Possible Points'));
-            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Points Earned'));
-            //     $grade_table_header->appendChild($this->createElement($dom, 'th', 'grade-table-header-cell', null, 'Percentage'));
-            // }
-            // $grade_table->appendChild($grade_table_header);
-
-            // foreach ($report_card->grades as $grade) {
-            //     $grade_row = $this->createElement($dom, 'tr', 'grade-row');
-            //     $grade_row->appendChild($this->createElement($dom, 'td', 'grade-date', null, $grade->date));
-            //     $grade_row->appendChild($this->createElement($dom, 'td', 'grade-name', null, $grade->name));
-            //     $grade_percentage = round((float)$grade->score / (float)$grade->total * 100);
-            //     if ($atts['type'] == 'all') {
-            //         $type_td = $this->createElement($dom, 'td', 'grade-type');
-            //         $type_td->appendChild($this->createElement($dom, 'a', 'grade-type-text', null, $grade->type, ['href' => $grade->type]));
-            //         $grade_row->appendChild($type_td);
-            //         $grade_letter = $this->getLetterGrade($grade_percentage);
-            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-percentage', null, $grade_percentage . '%'));
-            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-letter', null, $grade_letter));
-            //     } else {
-            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-total', null, $grade->total));
-            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-score', null, $this->processScore($grade->score)));
-            //         $grade_row->appendChild($this->createElement($dom, 'td', 'grade-percentage', null, $grade_percentage . '%'));
-            //     }
-            //     $grade_table->appendChild($grade_row);
-            // }
-            
-            /**
-             * Filters the final HTML output of the resume.
-             * 
-             * @since 0.0.0
-             * 
-             * @param string $html     The generated HTML
-             * @param array  $sections The resume sections data
-             * @return string The filtered HTML
-             */
-            // $html = apply_filters('tigr_report_card_html_output', $dom->saveHTML(), $report_card);
-            
-            // return $html;
-        } else {
-            $not_logged_in_message = DOMHelper::createElement($dom, 'div', 'not-logged-in-message');
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, 'Please '));
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'a', 'not-logged-in-message-text', null, 'log in', ['href' => '/my-account']));
-            $not_logged_in_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-logged-in-message-text', null, ' to view your child\'s grades.'));
-            $root->appendChild($not_logged_in_message);
+        $enrollment = $this->classRepository->getEnrollment($enrollment_id);
+        if (!$enrollment || $enrollment->user_id != $user_id) {
+            $not_enrolled_message = DOMHelper::createElement($dom, 'div', 'not-enrolled-message');
+            $not_enrolled_message->appendChild(DOMHelper::createElement($dom, 'span', 'not-enrolled-message-text', null, __('You are not enrolled in this class', $this->plugin_domain) . '.'));
+            $root->appendChild($not_enrolled_message);
             return $dom->saveHTML();
         }
+
+        if ($enrollment->status == 'pending') {
+            $pending_message = DOMHelper::createElement($dom, 'div', 'pending-message');
+            $pending_message->appendChild(DOMHelper::createElement($dom, 'span', 'pending-message-text', null, __('Your enrollment is pending approval by the teacher', $this->plugin_domain) . '.'));
+            $root->appendChild($pending_message);
+            return $dom->saveHTML();
+        }
+
+        if ($enrollment->status == 'rejected') {
+            $rejected_message = DOMHelper::createElement($dom, 'div', 'rejected-message');
+            $rejected_message->appendChild(DOMHelper::createElement($dom, 'span', 'rejected-message-text', null, __('Your enrollment has been rejected. Please contact the teacher for more information', $this->plugin_domain) . '.'));
+            $root->appendChild($rejected_message);
+            return $dom->saveHTML();
+        }
+
+        $this->renderReportCardContent($dom, $root);
     }
 
+    private function renderReportCardUI($dom, $root) {
+        $loading = DOMHelper::createElement($dom, 'div', 'loading-message');
+        $loading->appendChild(DOMHelper::createElement($dom, 'p', 'loading-text', null, __('Loading content', $this->plugin_domain) . '...'));
+        $root->appendChild($loading);
+
+        // Enqueue the JavaScript
+        wp_enqueue_script(
+            'tiger-grades-report-card',
+            plugins_url('tiger-grades/js/report-card.js', dirname(__FILE__, 3)),
+            array('jquery'),
+            '1.0.8',
+            true
+        );
+
+        // Localize the script with necessary data
+        wp_localize_script('tiger-grades-report-card', 'tigerGradesData', array(
+            'apiUrl' => rest_url('tiger-grades/v1/report-card'),
+            'metadataUrl' => rest_url('tiger-grades/v1/class-metadata'),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'copy' => [
+                'please_select_student' => __('Please select a student to view their grades', $this->plugin_domain),
+                'date' => __('Date', $this->plugin_domain),
+                'task' => __('Task', $this->plugin_domain),
+                'type' => __('Type', $this->plugin_domain),
+                'percent' => __('Percent', $this->plugin_domain),
+                'grade' => __('Grade', $this->plugin_domain),
+                'max' => __('Max', $this->plugin_domain),
+                'earned' => __('Earned', $this->plugin_domain),
+                'export_all' => __('Export all', $this->plugin_domain),
+                'export_as_pdf' => __('Export as PDF', $this->plugin_domain),
+                'select_student' => __('Select student', $this->plugin_domain),
+                'no_grades_found' => __('No grades found for this student', $this->plugin_domain),
+                'overall_grade' => __('Overall Grade', $this->plugin_domain),
+                'letter_grade' => __('Letter Grade', $this->plugin_domain),
+                'semester_average' => __('Semester Average', $this->plugin_domain),
+                'exempt' => __('Exempt', $this->plugin_domain),
+                'grades_are_worth' => __('grades are worth', $this->plugin_domain),
+                'of_the_overall_grade' => __('of the overall grade', $this->plugin_domain),
+                'woops' => __('Woops! This class is broken. You might be in the wrong place. Please try navigating to your class from the', $this->plugin_domain),
+                'grades_page' => __('grades page', $this->plugin_domain),
+                'grades_route' => $this->languageManager->getTranslatedRoute('/' . $this->languageManager->getTranslatedRouteSegment('grades')),
+            ]
+        ));
+
+        return $dom->saveHTML();
+    }
     // New protected method for better testability
     protected function getAPI() {
         return TigerGradesAPI::getInstance();

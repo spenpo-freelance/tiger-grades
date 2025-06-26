@@ -1,32 +1,36 @@
+:root {
+    --primary: #03c4eb;
+}
+
 .page-id-117, .parent-pageid-117 {
     --wp--style--global--content-size: 800px; /* Adjust the value as needed */
 }
 
-.grade-table-container {
+.responsive-table-container {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
 }
 
-.grade-table {
+.responsive-table {
     width: 100%;
     border-collapse: collapse;
     min-width: 500px; /* Ensures minimum width for readability */
 }
 
-.grade-table-header-row {
+table thead tr {
     background-color: #f2f2f2;
 }
 
-.grade-table tr:nth-child(even) {
+table tbody tr:nth-child(even) {
     background-color: #f2f2f2;
 }
 
-.grade-letter, .grade-percentage, .grade-total, .grade-score {
+table td {
     text-align: center;
 }
 
-.grade-table th, .grade-table td {
+table th, table td {
     padding: 8px;
     border: 1px solid #ddd;
     word-wrap: break-word; /* Allow text to wrap */
@@ -34,7 +38,7 @@
 }
 
 /* Optimize header display */
-.grade-table th {
+table thead th {
     padding: 8px 4px;
     font-weight: bold;
     white-space: normal; /* Allow wrapping if absolutely necessary */
@@ -42,26 +46,26 @@
 }
 
 /* Column width distribution */
-.grade-table .grade-date {
+table .grade-date {
     width: 15%;
 }
 
-.grade-table .grade-name {
+table .grade-name {
     width: 40%; /* Give more space to assignment names */
 }
 
-.grade-table .grade-type, 
-.grade-table .grade-total, 
-.grade-table .grade-score, 
-.grade-table .grade-percentage, 
-.grade-table .grade-letter {
+table .grade-type, 
+table .grade-total, 
+table .grade-score, 
+table .grade-percentage, 
+table .grade-letter {
     width: 15%;
     text-align: center;
 }
 
 /* Ensure text is readable on small screens */
 @media screen and (max-width: 480px) {
-    .grade-table th, .grade-table td {
+    table th, table td {
         padding: 6px 3px;
         font-size: 13px;
     }
@@ -76,6 +80,28 @@
     animation: spin 1s linear infinite; /* Spin animation */
     margin: 20px auto;
 }
+
+.loading-small {
+    display: inline-block;
+    width: 10px; /* Adjust size as needed */
+    height: 10px;
+    border: 2px solid rgba(10, 10, 10, 0.1); /* Light border */
+    border-top-color: var(--primary); /* Darker border for the spinning effect */
+    border-radius: 50%; /* Make it circular */
+    animation: spin 1s linear infinite; /* Spin animation */
+    margin: 5px auto;
+}
+
+.loading-medium {
+    display: inline-block;
+    width: 20px; /* Adjust size as needed */
+    height: 20px;
+    border: 2px solid rgba(10, 10, 10, 0.1); /* Light border */
+    border-top-color: var(--primary); /* Darker border for the spinning effect */
+    border-radius: 50%; /* Make it circular */
+    animation: spin 1s linear infinite; /* Spin animation */
+    margin: 5px auto;
+}
   
 @keyframes spin {
     0% {
@@ -84,6 +110,12 @@
     100% {
       transform: rotate(360deg);
     }
+}
+
+p.name-in-gradebook {
+    display: flex;
+    align-items: baseline;
+    gap: 5px;
 }
 
 .breadcrumbs {
@@ -117,7 +149,7 @@
 }
 
 .tabs button.active {
-    background-color: #03c4eb;
+    background-color: var(--primary);
     color: #fff;
 }
 
@@ -143,26 +175,91 @@
     margin-bottom: 12px;
 }
 
-.approve-enrollment-btn {
+.approve-dialog-controls-container {
+    display: flex;
+    gap: 10px;
+}
+
+.enrollment-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.class-manage-action-btn, .classes-table-manage-enrollments-button {
+    width: 100%;
+}
+
+.class-manage-action-btn, .approve-dialog-confirm, .view-message-btn, .classes-table-manage-enrollments-button {
     padding: 6px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: #f2f2f2;
+    background-color: #e8f7fa;  /* Light blue background that's distinct from both white and gray rows */
     color: #333;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
 }
 
-.approve-enrollment-btn:hover {
-    background-color: #03c4eb;
-    border-color: #03c4eb;
+.class-manage-action-btn:hover,
+.approve-dialog-confirm:hover,
+.view-message-btn:hover,
+.classes-table-manage-enrollments-button:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
     color: #fff;
+    text-decoration: none;
 }
 
-.approve-enrollment-btn:focus {
+.class-manage-action-btn:focus,
+.approve-dialog-confirm:focus,
+.view-message-btn:focus,
+.classes-table-manage-enrollments-button:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
+}
+
+.class-manage-action-btn:disabled,
+.approve-dialog-confirm:disabled,
+.view-message-btn:disabled,
+.classes-table-manage-enrollments-button:disabled {
+    background-color: #ddd;
+    color: #666;
+    cursor: not-allowed;
+}
+
+.view-message-btn {
+    align-self: flex-start;
+}
+
+.enrollment-table-cell > .flex-cell p {
+    margin: 0px;
+}
+
+.enrollment-table-cell > .flex-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.enrollment-table-cell.student-cell, .enrollment-table-cell.parent-cell {
+    text-align: left;
+}
+
+.approve-dialog-student-select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    flex: 3;
+}
+
+.approve-dialog-confirm, .approve-dialog-cancel {
+    flex: 1;
 }
 
 dialog {
@@ -213,6 +310,11 @@ dialog::backdrop {
     z-index: 2;
     background-color: transparent;
     color: #333;
+}
+
+.registration-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 
 .registration-button:focus {
@@ -271,6 +373,19 @@ dialog::backdrop {
     justify-content: space-between;
 }
 
+.align-flex-end {
+    align-items: flex-end;
+}
+
+.classes-table-header-container {
+    margin-bottom: 12px;
+}
+
+.classes-table-header-container h2 {
+    margin: 0px;
+    line-height: 1;
+}
+
 .register-class-btn {
     align-self: center;
 }
@@ -292,7 +407,7 @@ dialog::backdrop {
 }
 
 .class-type-selection-container-item:hover {
-    outline: 1px solid #03c4eb;
+    outline: 1px solid var(--primary);
 }
 
 .class-type-selection-container-item-image {
@@ -309,7 +424,7 @@ dialog::backdrop {
 /* Add a selected state style */
 .class-type-selection-container-item:active, 
 .class-type-selection-container-item:has(input[type="radio"]:checked) {
-    outline: 2px solid #03c4eb;
+    outline: 2px solid var(--primary);
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
@@ -382,7 +497,7 @@ dialog::backdrop {
 
 .form-control:focus {
     outline: none;
-    border-color: #03c4eb;
+    border-color: var(--primary);
     box-shadow: 0 0 0 2px rgba(3, 196, 235, 0.2);
 }
 
@@ -450,9 +565,36 @@ dialog::backdrop {
 }
 
 .expand-past-classes-input:checked + .expand-past-classes-label::after {
-    content: "Hide past classes";
+    content: var(--hide-text);
 }
 
 .expand-past-classes-label::after {
-    content: "Show past classes";
+    content: var(--show-text);
+}
+
+.error-message {
+    color: red;
+    font-size: 14px;
+    font-weight: 600;
+    margin-top: 10px;
+}
+
+.form-group.submit-enroll {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ur-submit-button, .user-registration-Button {
+    background-color: var(--primary) !important;
+    border: none !important;
+    border-radius: 2px !important;
+}
+
+.register-welcome-header, .register-welcome-subheader {
+    text-align: center;
+}
+
+.register-welcome-subheader {
+    margin-bottom: 24px;
 }

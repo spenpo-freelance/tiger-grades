@@ -3,6 +3,7 @@ jQuery(document).ready(function($) {
     if (!container.length) return;
     container.empty();
 
+    const { copy, apiUrl, metadataUrl, nonce } = tigerGradesData;
     const userId = container.data('user-id');
     const type = container.data('type');
     const enrollmentId = container.data('enrollment-id');
@@ -16,11 +17,11 @@ jQuery(document).ready(function($) {
 
     // Separate table header creation for reusability
     function createTableHeader(type) {
-        const headers = ['Date', 'Task'];
+        const headers = [copy.date, copy.task];
         if (type === 'all') {
-            headers.push('Type', 'Percent', 'Grade');
+            headers.push(copy.type, copy.percent, copy.grade);
         } else {
-            headers.push('Max', 'Earned', 'Percent');
+            headers.push(copy.max, copy.earned, copy.percent);
         }
 
         return $('<thead>').append(
@@ -38,13 +39,13 @@ jQuery(document).ready(function($) {
                 $('<td>')
                     .attr('colspan', '5')
                     .addClass('empty-state-message')
-                    .text('No grades found')
+                    .text(copy.no_grades_found)
             )
         );
     }
 
     function createGradeTable(type, isEmpty = false) {
-        const table = $('<table>').addClass('grade-table');
+        const table = $('<table>').addClass('responsive-table');
         table.append(createTableHeader(type));
         
         if (isEmpty) {
@@ -95,7 +96,7 @@ jQuery(document).ready(function($) {
         if (isTeacher && type === 'all') {
             const exportAllButton = $('<button>')
                 .addClass('export-pdf-button btn btn-theme-primary btn-md')
-                .text('Export All')
+                .text(copy.export_all)
                 .on('click', () => exportReportCardAsPDF(data, type, true));
             controls.append(exportAllButton);
         }
@@ -105,7 +106,7 @@ jQuery(document).ready(function($) {
         // Export single student report card
         const exportButton = $('<button>')
             .addClass('export-pdf-button btn btn-theme-primary btn-md')
-            .text('Export as PDF')
+            .text(copy.export_as_pdf)
             .on('click', () => exportReportCardAsPDF(data, type));
         
         controls.append(exportButton);
@@ -118,18 +119,18 @@ jQuery(document).ready(function($) {
         const studentInfo = $('<div>').addClass('average-container');
 
         if (isFirstRender) {
-            studentInfo.append($('<h4>').addClass('average').text('Please select a student to view their grades'));
+            studentInfo.append($('<h4>').addClass('average').text(copy.please_select_student));
             return studentInfo;
         }
         
         if (type === 'all') {
             studentInfo.append(
-                $('<h4>').addClass('average').text(`Overall Grade: ${data.avg.final}`),
-                $('<h4>').addClass('average').text(`Letter Grade: ${getLetterGrade(parseFloat(data.avg.final))}`)
+                $('<h4>').addClass('average').text(`${copy.overall_grade}: ${data.avg.final}`),
+                $('<h4>').addClass('average').text(`${copy.letter_grade}: ${getLetterGrade(parseFloat(data.avg.final))}`)
             );
         } else {
             studentInfo.append(
-                $('<h4>').addClass('average').text(`Semester Average: ${data.avg[type]}`)
+                $('<h4>').addClass('average').text(`${copy.semester_average}: ${data.avg[type]}`)
             );
         }
         
@@ -148,7 +149,7 @@ jQuery(document).ready(function($) {
             .append(controls);
 
         // Create and append grade table
-        const tableContainer = $('<div>').addClass('grade-table-container');
+        const tableContainer = $('<div>').addClass('responsive-table-container');
         
         if (isFirstRender) {
             // For teachers before student selection
@@ -163,7 +164,7 @@ jQuery(document).ready(function($) {
 
     function getPercentage (score, total) {
         if (score === '') return '--';
-        if (score === 'e') return 'EXEMPT';
+        if (score === 'e') return copy.exempt;
         else return Math.round((parseFloat(score) / parseFloat(total)) * 100);
     }
 
@@ -178,15 +179,15 @@ jQuery(document).ready(function($) {
     function processScore(score) {
         if (score === '') return '--';
         if (score === '0') return '00';
-        if (score === 'e') return 'EXEMPT';
+        if (score === 'e') return copy.exempt;
         return score;
     }
 
     $.ajax({
-        url: tigerGradesData.apiUrl,
+        url: apiUrl,
         method: 'GET',
         beforeSend: function(xhr) {
-            xhr.setRequestHeader('X-WP-Nonce', tigerGradesData.nonce);
+            xhr.setRequestHeader('X-WP-Nonce', nonce);
         },
         data: {
             user_id: userId,
@@ -210,7 +211,7 @@ jQuery(document).ready(function($) {
                 if (isTeacher) {    
                     studentName.append(
                         $('<select>').addClass('student-name-select').append(
-                            $('<option>').text('Select Student').attr('value', '').attr('disabled', 'disabled').attr('selected', 'selected'),
+                            $('<option>').text(copy.select_student).attr('value', '').attr('disabled', 'disabled').attr('selected', 'selected'),
                             data.reports.map(({ name, student_id }) => $('<option>').text(name).attr('value', student_id))
                         ).on('change', function() {
                             const selectedStudentId = $(this).val();
@@ -229,7 +230,7 @@ jQuery(document).ready(function($) {
             }
         },
         error: function(xhr, status, error) {
-            reportCard.html('<div class="error-message">Woops! This class is broken. You might be in the wrong place. Please try navigating to your class from the <a href="/grades">grades page</a>.</div>');
+            reportCard.html(`<div class="error-message">${copy.woops} <a href="${copy.grades_route}">${copy.grades_page}</a></div>`);
         }
     });
 
@@ -238,12 +239,12 @@ jQuery(document).ready(function($) {
         const studentNameContainer = $('.class-metadata-container');
         studentNameContainer.append($('<p>').addClass('metadata text-loading').append(
             $('<strong>').addClass('metadata-type').text(type),
-            ` grades are worth `,
+            ` ${copy.grades_are_worth} `,
             $('<strong>').addClass('metadata-weight').text('(...)'),
-            ` of the overall grade`
+            ` ${copy.of_the_overall_grade}`
         ));
         $.ajax({
-            url: tigerGradesData.metadataUrl,
+            url: metadataUrl,
             method: 'GET',
             data: {
                 type,
@@ -251,7 +252,7 @@ jQuery(document).ready(function($) {
                 is_teacher: isTeacher,
             },
             beforeSend: function(xhr) {
-                xhr.setRequestHeader('X-WP-Nonce', tigerGradesData.nonce);
+                xhr.setRequestHeader('X-WP-Nonce', nonce);
             },
             success: function(data) {
                 $('.metadata-weight').text(data.weight);
@@ -404,11 +405,14 @@ jQuery(document).ready(function($) {
     }
 
     function generatePDF(data, type) {
+        const studentName = data.name;
+        const className = data.class || 'Class'; // Fallback if class_name isn't available
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         let yPos = 30;
         
         const { tableColumn } = setupDocument(doc, yPos, data, type);
+        yPos += 7;
         
         // Add grade information
         if (type === 'all') {

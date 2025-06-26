@@ -1,12 +1,60 @@
 jQuery(document).ready(function($) {
-    const approveBtns = $('.approve-enrollment-btn');
     const dialog = document.querySelector('#approve-dialog-approveDialog');
-    const approvalBtn = document.querySelector('.approve-dialog-confirm');
+    const confirmApprovalBtn = document.querySelector('.approve-dialog-confirm');
     const cancelBtn = document.querySelector('.approve-dialog-cancel');
+    const enrollmentRows = $('.enrollment-table-row');
 
-    const { class_id, studentApiUrl, approveApiUrl, nonce } = tigerGradesData;
+    const { class_id, studentApiUrl, approveApiUrl, rejectApiUrl, nonce, copy } = tigerGradesData;
 
     let selectedStudentId;
+
+    enrollmentRows.each(function() {
+        const enrollmentId = $(this).data('enrollment-id');
+        const statusCell = $(this).find('.enrollment-table-cell.enrollment-status');
+        const status = statusCell.text();
+
+        const viewMessageBtn = $(this).find('.view-message-btn');
+        if (viewMessageBtn.length > 0) {
+            viewMessageBtn.on('click', function(e) {
+                e.preventDefault();
+                const messageDialog = document.querySelector(`.message-dialog[data-enrollment-id="${enrollmentId}"]`);
+                messageDialog.showModal();
+                const messageDialogCloseBtn = messageDialog.querySelector('.message-dialog-close');
+                messageDialogCloseBtn.addEventListener('click', () => {
+                    messageDialog.close();
+                });
+            });
+            viewMessageBtn.removeAttr('disabled');
+        }
+
+        const rejectBtn = $(this).find('.reject-enrollment-btn');
+        rejectBtn.on('click', function(e) {
+            e.preventDefault();
+            const rejectBtnLabel = $(this).find('.reject-enrollment-btn-label');
+            const rejectBtnText = rejectBtnLabel.text();
+            rejectBtnLabel.text("");
+            rejectBtnLabel.addClass('loading-small');
+            $.ajax({
+                url: rejectApiUrl,
+                method: 'POST',
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader('X-WP-Nonce', nonce);
+                },
+                data: {
+                    enrollment_id: enrollmentId
+                },
+                success: function(data) {
+                    rejectBtnLabel.text(rejectBtnText);
+                    rejectBtnLabel.removeClass('loading-small');
+                    statusCell.text(copy[data.data.status]);
+                    rejectBtn.attr('disabled', 'disabled');
+                }
+            });
+        });
+        if (status !== copy.rejected) {
+            rejectBtn.removeAttr('disabled');
+        }
+    });
 
     $.ajax({
         url: studentApiUrl,
@@ -18,6 +66,7 @@ jQuery(document).ready(function($) {
             class_id
         },
         success: function(data) {
+            // Populate the student select with the students in the class
             const studentSelect = document.querySelector('.approve-dialog-student-select');
             data.forEach(student => {
                 const option = document.createElement('option');
@@ -28,12 +77,75 @@ jQuery(document).ready(function($) {
             studentSelect.addEventListener('change', function() {
                 selectedStudentId = this.value;
                 if (this.value !== '') {
-                    approvalBtn.disabled = false;
+                    confirmApprovalBtn.disabled = false;
                 } else {
-                    approvalBtn.disabled = true;
+                    confirmApprovalBtn.disabled = true;
                 }
             });
             studentSelect.disabled = false;
+
+            enrollmentRows.each(function() {
+                const statusCell = $(this).find('.enrollment-table-cell.enrollment-status');
+                const rejectBtn = $(this).find('.reject-enrollment-btn');
+                // Populate the gradebook name for each enrollment row
+                const gradebookName = $(this).find('.gradebook-name');
+                const studentId = $(this).data('student-id');
+                if (studentId) {
+                    const studentName = data.find(student => Number(student.id) === studentId)?.name;
+                    gradebookName.text(studentName);
+                    gradebookName.removeClass('loading-small');
+                }
+
+                // Handle the function of the approve button
+                const approveBtn = $(this).find('.approve-enrollment-btn');
+                approveBtn.on('click', function(e) {
+                    e.preventDefault();
+                    dialog.showModal(); // Opens the modal
+                    const enrollmentId = $(this).data('enrollment-id');
+        
+                    confirmApprovalBtn.addEventListener('click', () => {
+                        const confirmText = $('.approve-dialog-confirm-text');
+                        confirmText.text('');
+                        confirmText.addClass('loading-small');
+                        $.ajax({
+                            url: approveApiUrl,
+                            method: 'POST',
+                            beforeSend: function(xhr) {
+                                xhr.setRequestHeader('X-WP-Nonce', nonce);
+                            },
+                            data: {
+                                enrollment_id: enrollmentId,
+                                student_id: selectedStudentId
+                            },
+                            success: function(data) {
+                                dialog.close();
+                                statusCell.text(copy[data.data.status]);
+                                approveBtn.text(copy.change);
+                                confirmText.text(copy.confirm);
+                                confirmText.removeClass('loading-small');
+                                const studentSelect = document.querySelector('.approve-dialog-student-select');
+                                studentSelect.value = '';
+                                rejectBtn.removeAttr('disabled');
+                                confirmApprovalBtn.disabled = true;
+                            },
+                            error: function(xhr, status, error) {
+                                confirmText.text(copy.confirm);
+                                confirmText.removeClass('loading-small');
+                                const errorMessage = document.createElement('div');
+                                errorMessage.className = 'error-message';
+                                errorMessage.textContent = 'Error approving enrollment. Please try again later. If the problem persists, please contact support.';
+                                dialog.appendChild(errorMessage);
+                                setTimeout(() => {
+                                    errorMessage.remove();
+                                }, 3000);
+                            }
+                        });
+                    });
+                });
+
+                approveBtn.removeAttr('disabled');
+                approveBtn.find('.loading-small').hide();
+            });
         },
         error: function(xhr, status, error) {
             reportCard.html('<div class="error-message">Error loading report card. Please try again later.</div>');
@@ -41,38 +153,9 @@ jQuery(document).ready(function($) {
         }
     });
 
-    // Add click handlers to all approve buttons
-    approveBtns.each(function() {
-        $(this).on('click', function(e) {
-            e.preventDefault();
-            dialog.showModal(); // Opens the modal
-            const enrollmentId = $(this).data('enrollment-id');
-
-            approvalBtn.addEventListener('click', () => {
-                $.ajax({
-                    url: approveApiUrl,
-                    method: 'POST',
-                    beforeSend: function(xhr) {
-                        xhr.setRequestHeader('X-WP-Nonce', nonce);
-                    },
-                    data: {
-                        enrollment_id: enrollmentId,
-                        student_id: selectedStudentId
-                    },
-                    success: function(data) {
-                        dialog.close();
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error approving enrollment:', error);
-                    }
-                });
-            });
-        });
-    });
-
     // Handle dialog close
     cancelBtn.addEventListener('click', () => {
-        approvalBtn.removeEventListener('click', () => {});
+        confirmApprovalBtn.removeEventListener('click', () => {});
         dialog.close();
     });
 }); 

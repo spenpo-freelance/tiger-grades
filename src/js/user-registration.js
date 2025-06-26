@@ -5,12 +5,6 @@ jQuery(document).ready(function($) {
     const cachedForms = {};
     const loadedScripts = new Set();
     
-    // Initial load of user form
-    cachedForms.user = {
-        html: registrationFormContainer.html(),
-        scripts: []
-    };
-    
     registrationButtons.on('click', function() {
         const formId = $(this).data('form-id');
         
@@ -53,10 +47,10 @@ jQuery(document).ready(function($) {
             url: tigr_ajax_object.ajax_url,
             type: 'POST',
             data: { 
-                shortcode: formShortcode
+                shortcode: formShortcode,
+                lang: tigr_ajax_object.language
             },
             success: function(response) {
-                console.log('Form fetched:', formId, response); // Debug log
                 cachedForms[formId] = {
                     html: response.rendered,
                     scripts: response.scripts
@@ -98,14 +92,15 @@ jQuery(document).ready(function($) {
                     .then(() => {
                         const scriptElement = document.createElement('script');
                         scriptElement.src = script.src;
+                        if (script.handle === 'ur-recaptcha-hcaptcha') {
+                            scriptElement.src += '&hl=' + tigr_ajax_object.language;
+                        }
                         scriptElement.setAttribute('data-dynamic', 'true');
                         scriptElement.onload = () => {
                             loadedScripts.add(script.handle);
-                            console.log('Script loaded:', script.src);
                             resolve();
                         };
                         scriptElement.onerror = (error) => {
-                            console.error('Failed to load script:', script.src, error);
                             reject(error);
                         };
                         document.head.appendChild(scriptElement);

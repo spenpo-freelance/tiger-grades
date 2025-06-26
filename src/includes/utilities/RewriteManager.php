@@ -6,13 +6,19 @@ use Spenpo\TigerGrades\Repositories\TigerClassRepository;
 
 class RewriteManager {
     private $classRepository;
+    private $defaultLanguage;
 
     public function __construct() {
         $this->classRepository = new TigerClassRepository();
+        $languageConstants = LanguageManager::getInstance();
+        $this->defaultLanguage = $languageConstants->getDefaultLanguage();
         // Register hooks with high priority (1)
         add_filter('query_vars', [$this, 'registerQueryVars'], 1);
         add_action('init', [$this, 'registerRewriteRules'], 1);
         add_action('init', [$this, 'rewriteBreadcrumbs'], 1);
+        // Hook into Polylang's URL generation - try multiple approaches
+        add_filter('pll_translation_url', [$this, 'modifyLanguageSwitcherUrl'], 10, 2);
+        add_filter('pll_the_languages', [$this, 'modifyLanguagesArray'], 10, 2);
     }
 
     public function registerQueryVars($vars) {
@@ -30,13 +36,28 @@ class RewriteManager {
             'top'
         );
         add_rewrite_rule(
+            '^zh/teacher-zh/classes-zh/(\d+)/?$',
+            'index.php?pagename=teacher-zh/classes-zh/teacher-class-zh&class_id=$matches[1]',
+            'top'
+        );
+        add_rewrite_rule(
             '^grades/([^/]+)/?$',
             'index.php?pagename=grades/parent-class&enrollment_id=$matches[1]',
             'top'
         );
         add_rewrite_rule(
+            '^zh/grades-zh/([^/]+)/?$',
+            'index.php?pagename=grades-zh/parent-class-zh&enrollment_id=$matches[1]',
+            'top'
+        );
+        add_rewrite_rule(
             '^grades/([^/]+)/([^/]+)/?$',
             'index.php?pagename=grades/parent-class/category&enrollment_id=$matches[1]&class_category=$matches[2]',
+            'top'
+        );
+        add_rewrite_rule(
+            '^zh/grades-zh/([^/]+)/([^/]+)/?$',
+            'index.php?pagename=grades-zh/parent-class-zh/category-zh&enrollment_id=$matches[1]&class_category=$matches[2]',
             'top'
         );
     }
@@ -74,12 +95,24 @@ class RewriteManager {
         } else {
             $classTitle = $this->classRepository->getClassFromEnrollment($enrollment_id)->title;
         }
+
+        $parent_class_route = 'parent-class';
+        $grades_route = 'grades';
+
+        // if polylang is active, use the current language to determine the route
+        if (function_exists('pll_current_language')) {
+            $lang = pll_current_language();
+            if ($lang !== $this->defaultLanguage) {
+                $parent_class_route .= '-zh';
+                $grades_route .= '-zh';
+            }
+        }
         // Current item
         $trail->add(new bcn_breadcrumb(
             $classTitle,
             $this->getBreadcrumbTemplate(!$has_category),
-            array('parent-class'),
-            site_url('/grades/' . $enrollment_id . '/'),
+            array($parent_class_route),
+            site_url('/' . $grades_route . '/' . $enrollment_id . '/'),
             $has_category ? 2 : 1
         ));
     }
@@ -89,27 +122,45 @@ class RewriteManager {
         $path_parts = explode('/', $current_path);
         
         $trail->breadcrumbs = array();
+
+        $teacher_classes_route = 'teacher-classes';
+        $teacher_route = 'teacher';
+        $classes_route = 'classes';
+        $grades_route = 'grades';
+        $register_route = 'register';
+
+        // if polylang is active, use the current language to determine the route
+        if (function_exists('pll_current_language')) {
+            $lang = pll_current_language();
+            if ($lang !== $this->defaultLanguage) {
+                $teacher_classes_route .= '-zh';
+                $teacher_route .= '-zh';
+                $classes_route .= '-zh';
+                $grades_route .= '-zh';
+                $register_route .= '-zh';
+            }
+        }
         
         // Handle teacher/classes/{id} path
-        if ($path_parts[0] === 'teacher' && !empty($path_parts[2]) && $path_parts[2] !== 'register') {
+        if ($path_parts[0] === $teacher_route && !empty($path_parts[2]) && $path_parts[2] !== $register_route) {
             $class_id = $path_parts[2];
-            if (!empty($path_parts[1]) && $path_parts[1] === 'classes') {
+            if (!empty($path_parts[1]) && $path_parts[1] === $classes_route) {
                 if (!empty($path_parts[2])) {
                     $this->handleTeacherClassBreadcrumb($trail, $class_id);
                 
                     $trail->add(new bcn_breadcrumb(
                         'Classes',
                         $this->getBreadcrumbTemplate(),
-                        array('teacher-classes'),
-                        site_url('/teacher/classes/'),
+                        array($teacher_classes_route),
+                        site_url('/' . $teacher_route . '/' . $classes_route . '/'),
                         2
                     ));
                     
                     $trail->add(new bcn_breadcrumb(
                         'Teacher',
                         $this->getBreadcrumbTemplate(),
-                        array('teacher-classes'),
-                        site_url('/teacher/'),
+                        array($teacher_classes_route),
+                        site_url('/' . $teacher_route . '/'),
                         3
                     ));
                     
@@ -125,7 +176,7 @@ class RewriteManager {
         }
         
         // Handle grades/{id} and grades/{id}/{category} paths
-        if ($path_parts[0] === 'grades') {
+        if ($path_parts[0] === $grades_route) {
             $has_category = false;
             if (!empty($path_parts[2])) {
                 $category_name = ucwords(str_replace('-', ' ', $path_parts[2]));
@@ -147,8 +198,8 @@ class RewriteManager {
             $trail->add(new bcn_breadcrumb(
                 'Grades',
                 $this->getBreadcrumbTemplate(),
-                array('grades'),
-                site_url('/grades/'),
+                array($grades_route),
+                site_url('/' . $grades_route . '/'),
                 $has_category ? 3 : 2
             ));
             
@@ -162,6 +213,129 @@ class RewriteManager {
         }
         
         return $trail;
+    }
+
+    public function modifyLanguageSwitcherUrl($url, $lang) {
+        // Get the current URL path
+        $current_path = trim($_SERVER['REQUEST_URI'], '/');
+        $path_parts = explode('/', $current_path);
+
+        // Handle teacher class URLs
+        if (strpos($current_path, 'teacher-zh/classes-zh/') !== false || strpos($current_path, 'teacher/classes/') !== false) {
+            $class_id = end($path_parts);
+            if (is_numeric($class_id)) {
+                if ($lang === $this->defaultLanguage) {
+                    $new_url = home_url("teacher/classes/{$class_id}");
+                    return $new_url;
+                } else {
+                    $new_url = home_url("zh/teacher-zh/classes-zh/{$class_id}");
+                    return $new_url;
+                }
+            }
+        }
+
+        // Handle grades URLs
+        if (strpos($current_path, 'grades-zh/') !== false || strpos($current_path, 'grades/') !== false) {
+            $enrollment_id = null;
+            $category = null;
+            
+            // Parse URL structure based on current language
+            if (strpos($current_path, 'zh/grades-zh/') !== false) {
+                // Chinese URL: zh/grades-zh/123 or zh/grades-zh/123/category
+                $enrollment_id = $path_parts[2] ?? null;
+                $category = $path_parts[3] ?? null;
+            } else {
+                // English URL: grades/123 or grades/123/category
+                $enrollment_id = $path_parts[1] ?? null;
+                $category = $path_parts[2] ?? null;
+            }
+            
+            if ($enrollment_id) {
+                if ($lang === $this->defaultLanguage) {
+                    $new_url = home_url("grades/{$enrollment_id}");
+                    if ($category) {
+                        $new_url .= "/{$category}";
+                    }
+                    return $new_url;
+                } else {
+                    $new_url = home_url("zh/grades-zh/{$enrollment_id}");
+                    if ($category) {
+                        $new_url .= "/{$category}";
+                    }
+                    return $new_url;
+                }
+            }
+        }
+
+        return $url;
+    }
+
+    public function modifyLanguagesArray($languages, $args) {
+        $current_path = trim($_SERVER['REQUEST_URI'], '/');
+        
+        foreach ($languages as $lang_code => $language) {
+            // Modify the URL based on current path
+            $modified_url = $this->generateCorrectLanguageUrl($current_path, $lang_code);
+            if ($modified_url) {
+                $languages[$lang_code]['url'] = $modified_url;
+            }
+        }
+        
+        return $languages;
+    }
+
+    private function generateCorrectLanguageUrl($current_path, $target_lang) {
+        $path_parts = explode('/', $current_path);
+        
+        // Handle teacher class URLs
+        if (strpos($current_path, 'teacher-zh/classes-zh/') !== false || strpos($current_path, 'teacher/classes/') !== false) {
+            $class_id = end($path_parts);
+            if (is_numeric($class_id)) {
+                // Check if this is English (could be 'en', 'english', or similar)
+                if ($target_lang === $this->defaultLanguage || $target_lang === 'english') {
+                    return home_url("teacher/classes/{$class_id}");
+                } else {
+                    return home_url("zh/teacher-zh/classes-zh/{$class_id}");
+                }
+            }
+        }
+
+        // Handle grades URLs
+        if (strpos($current_path, 'grades-zh/') !== false || strpos($current_path, 'grades/') !== false) {
+            $enrollment_id = null;
+            $category = null;
+            
+            // Parse URL structure based on current language
+            if (strpos($current_path, 'zh/grades-zh/') !== false) {
+                // Chinese URL: zh/grades-zh/123 or zh/grades-zh/123/category
+                $enrollment_id = $path_parts[2] ?? null;
+                $category = $path_parts[3] ?? null;
+            } else {
+                // English URL: grades/123 or grades/123/category
+                $enrollment_id = $path_parts[1] ?? null;
+                $category = $path_parts[2] ?? null;
+            }
+            
+            error_log('Parsed enrollment_id: ' . $enrollment_id . ', category: ' . $category);
+
+            if ($enrollment_id) {
+                if ($target_lang === $this->defaultLanguage || $target_lang === 'english') {
+                    $url = home_url("grades/{$enrollment_id}");
+                    if ($category) {
+                        $url .= "/{$category}";
+                    }
+                    return $url;
+                } else {
+                    $url = home_url("zh/grades-zh/{$enrollment_id}");
+                    if ($category) {
+                        $url .= "/{$category}";
+                    }
+                    return $url;
+                }
+            }
+        }
+        
+        return null; // No modification needed
     }
 }
 

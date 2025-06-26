@@ -68,8 +68,36 @@ class TigerClassRepository {
             if ($this->wpdb->last_error) {
                 throw new Exception($this->wpdb->last_error);
             }
+
+            $enrollment = $this->getEnrollment($enrollment_id);
+
+            return $enrollment;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Teachers can approve enrollments for a class.
+     * 
+     * @return array Array of text section objects
+     * @throws Exception When database error occurs
+     */
+    public function rejectEnrollment($enrollment_id) {
+        try {
+            $enrollmentQuery = $this->wpdb->prepare("
+                UPDATE {$this->wpdb->prefix}tigr_enrollments SET status = 'rejected', student_id = NULL WHERE id = %d
+            ", $enrollment_id);
             
-            return $results;
+            $results = $this->wpdb->get_results($enrollmentQuery);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+
+            $enrollment = $this->getEnrollment($enrollment_id);
+
+            return $enrollment;
         } catch (Exception $e) {
             throw $e;
         }
@@ -78,18 +106,23 @@ class TigerClassRepository {
     /**
      * Teachers can view all enrollments for a class.
      * 
+     * @param int $class_id The ID of the class
+     * @param int $user_id The ID of the teacher
      * @return array Array of text section objects
      * @throws Exception When database error occurs
      */
-    public function getClassEnrollments($class_id) {
+    public function getClassEnrollments($class_id, $user_id) {
         try {
             $enrollmentQuery = $this->wpdb->prepare("
                 SELECT e.*, u.display_name as parent_name, u.user_email as parent_email
                 FROM {$this->wpdb->prefix}tigr_enrollments e
                 LEFT JOIN {$this->wpdb->prefix}users u ON e.user_id = u.ID
+                LEFT JOIN {$this->wpdb->prefix}tigr_classes c ON e.class_id = c.id
                 WHERE e.class_id = %d
-                AND e.status = 'pending'
-            ", $class_id);
+                AND c.teacher = %d
+                -- AND e.status = 'pending'
+                ORDER BY e.updated DESC
+            ", $class_id, $user_id);
             
             $results = $this->wpdb->get_results($enrollmentQuery);
             
@@ -98,6 +131,32 @@ class TigerClassRepository {
             }
             
             return $results;
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    /**
+     * Teachers can view an enrollment for a class.
+     * 
+     * @return array Array of text section objects
+     * @throws Exception When database error occurs
+     */
+    public function getEnrollment($enrollment_id) {
+        try {
+            $enrollmentQuery = $this->wpdb->prepare("
+                SELECT *
+                FROM {$this->wpdb->prefix}tigr_enrollments
+                WHERE id = %d
+            ", $enrollment_id);
+            
+            $results = $this->wpdb->get_results($enrollmentQuery);
+            
+            if ($this->wpdb->last_error) {
+                throw new Exception($this->wpdb->last_error);
+            }
+            
+            return empty($results) ? null : $results[0];
         } catch (Exception $e) {
             throw $e;
         }
@@ -123,7 +182,7 @@ class TigerClassRepository {
                 throw new Exception($this->wpdb->last_error);
             }
             
-            return $results[0];
+            return empty($results) ? null : $results[0];
         } catch (Exception $e) {
             throw $e;
         }
@@ -150,7 +209,7 @@ class TigerClassRepository {
                 throw new Exception($this->wpdb->last_error);
             }
             
-            return $results[0];
+            return empty($results) ? null : $results[0];
         } catch (Exception $e) {
             throw $e;
         }
@@ -174,7 +233,7 @@ class TigerClassRepository {
                 throw new Exception($this->wpdb->last_error);
             }
             
-            return $results[0]->gradebook_id;
+            return empty($results) ? null : $results[0]->gradebook_id;
         } catch (Exception $e) {
             throw $e;
         }
@@ -199,7 +258,9 @@ class TigerClassRepository {
                 throw new Exception($this->wpdb->last_error);
             }
             
-            return $results;
+            $enrollment = $this->getEnrollment($this->wpdb->insert_id);
+
+            return $enrollment;
         } catch (Exception $e) {
             throw $e;
         }
@@ -226,7 +287,7 @@ class TigerClassRepository {
                 throw new Exception($this->wpdb->last_error);
             }
             
-            return $results;
+            return empty($results) ? null : $results[0];
         } catch (Exception $e) {
             throw $e;
         }
