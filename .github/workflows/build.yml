@@ -144,12 +144,27 @@ jobs:
         EOF
         echo "✅ Created rsync exclude file"
 
+    - name: Clean up remote symlinks and conflicts (pre-deploy)
+      uses: appleboy/ssh-action@v0.1.8
+      continue-on-error: true
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USERNAME }}
+        key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+        port: ${{ secrets.HOSTINGER_PORT }}
+        script: |
+          cd ${{ env.DEPLOY_PATH }} || exit 0
+          # Remove any broken symlinks or symlinks that might conflict
+          find wp-content/plugins -type l -delete 2>/dev/null || true
+          find wp-content/themes -type l -delete 2>/dev/null || true
+          echo "✅ Cleaned up remote symlinks"
+
     - name: Deploy via Rsync (with retry)
       id: rsync-deploy
       continue-on-error: true
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzr --progress --partial --partial-dir=.rsync-partial --exclude-from=.rsync-exclude
+        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
@@ -162,7 +177,7 @@ jobs:
       continue-on-error: true
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzr --progress --partial --partial-dir=.rsync-partial --exclude-from=.rsync-exclude
+        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
@@ -174,7 +189,7 @@ jobs:
       if: steps.rsync-deploy.outcome == 'failure'
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzr --progress --partial --partial-dir=.rsync-partial --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --exclude-from=.rsync-exclude
+        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
