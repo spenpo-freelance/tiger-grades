@@ -1,0 +1,140 @@
+name: WordPress Build & Automation
+
+on:
+  push:
+    branches: [ "main", "staging", "release" ]
+  pull_request:
+    branches: [ "main", "staging", "release" ]
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: read
+
+env:
+  PHP_VERSION: '8.3'
+  COMPOSER_NO_INTERACTION: 1
+
+jobs:
+  build:
+    name: Build WordPress
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, curl, zip, gd, mysql, mysqli
+        coverage: none
+
+    - name: Install Composer
+      uses: php-actions/composer@v6
+      with:
+        php_version: ${{ env.PHP_VERSION }}
+
+    - name: Validate composer.json
+      run: composer validate --strict
+
+    - name: Create Composer cache directory
+      run: mkdir -p ~/.composer/cache
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.composer/cache
+        key: ${{ runner.os }}-php-composer-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-composer-
+
+    - name: Make scripts executable
+      run: |
+        chmod +x build.sh
+
+    - name: Ensure workspace permissions
+      run: |
+        # Ensure the workspace is writable by the current user
+        # This fixes permission issues that can occur with cached files
+        sudo chown -R $USER:$USER . || true
+        chmod -R u+w . || true
+
+    - name: Run WordPress build
+      run: ./build.sh
+      continue-on-error: false
+      env:
+        R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+        R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+        R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+
+    - name: Verify build output
+      run: |
+        if [ ! -d "wordpress" ]; then
+          echo "❌ WordPress directory not created"
+          exit 1
+        fi
+        if [ ! -f "wordpress/index.php" ]; then
+          echo "❌ WordPress index.php not found"
+          exit 1
+        fi
+        echo "✅ WordPress build verified"
+
+    - name: Set deployment path
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}" >> $GITHUB_ENV
+        else
+          echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/${{ github.ref_name }}" >> $GITHUB_ENV
+        fi
+
+    - name: Deploy via Rsync
+      uses: burnett01/rsync-deployments@5.2.1
+      with:
+        switches: -avzr
+        path: wordpress/
+        remote_path: ${{ env.DEPLOY_PATH }}
+        remote_host: ${{ secrets.HOSTINGER_HOST }}
+        remote_user: ${{ secrets.HOSTINGER_USERNAME }}
+        remote_key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+        remote_port: ${{ secrets.HOSTINGER_PORT }}
+
+    - name: Sync new images with WordPress Database
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USERNAME }}
+        key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+        port: ${{ secrets.HOSTINGER_PORT }}
+        script: |
+          cd ${{ env.DEPLOY_PATH }}
+          wp eval-file wordpress-image-sync.php
+
+    - name: Run migrations on target environment
+      uses: appleboy/ssh-action@v0.1.8
+      with:
+        host: ${{ secrets.HOSTINGER_HOST }}
+        username: ${{ secrets.HOSTINGER_USERNAME }}
+        key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+        port: ${{ secrets.HOSTINGER_PORT }}
+        script: |
+          cd ${{ env.DEPLOY_PATH }}
+          chmod +x migrations.sh
+          ./migrations.sh ${{ env.DEPLOY_PATH }}
+
+    - name: Build summary
+      run: |
+        echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ WordPress build completed successfully" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Build Artifacts" >> $GITHUB_STEP_SUMMARY
+        echo "- WordPress installation: \`wordpress/\`" >> $GITHUB_STEP_SUMMARY
+        if [ -d "wordpress/wp-content/themes" ]; then
+          echo "- Themes: $(ls -1 wordpress/wp-content/themes | wc -l) installed" >> $GITHUB_STEP_SUMMARY
+        fi
+        if [ -d "wordpress/wp-content/plugins" ]; then
+          echo "- Plugins: $(ls -1 wordpress/wp-content/plugins | wc -l) installed" >> $GITHUB_STEP_SUMMARY
+        fi

@@ -1,0 +1,59 @@
+{
+    "name": "spenpo-freelance/tiger-grades-app",
+    "description": "wordpress automation",
+    "type": "project",
+    "require": {
+        "roots/wordpress": "^6.8",
+        "php": "^8.0",
+        "wp-cli/wp-cli": "^2.12",
+        "wpackagist-theme/onepress": "^2.3.16",
+        "spenpo-freelance/onepress-tigergrades": "dev-main",
+        "spenpo-freelance/tiger-grades": "dev-main",
+        "aws/aws-sdk-php": "^3.0",
+        "wpackagist-plugin/akismet": "^5.6",
+        "wpackagist-plugin/breadcrumb-navxt": "^7.5",
+        "wpackagist-plugin/if-menu": "^0.19.2",
+        "wpackagist-plugin/litespeed-cache": "^7.6",
+        "wpackagist-plugin/members": "^3.2",
+        "wpackagist-plugin/polylang": "^3.7",
+        "wpackagist-plugin/user-registration": "^4.4",
+        "wpackagist-plugin/wp-mail-smtp": "^4.7"
+    },
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "SpenpoFreelance\\TigerGradesApp\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Spenpo",
+            "email": "spenpo@spenpo.com"
+        }
+    ],
+    "config": {
+        "allow-plugins": {
+            "roots/wordpress-core-installer": true,
+            "composer/installers": true
+        },
+        "installer-paths": {
+            "wordpress/wp-content/plugins/{$name}/": ["type:wordpress-plugin"],
+            "wordpress/wp-content/themes/{$name}/": ["type:wordpress-theme"],
+            "wordpress/wp-content/mu-plugins/{$name}/": ["type:wordpress-muplugin"]
+        }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://wpackagist.org"
+        },
+        {
+            "type": "path",
+            "url": "src/themes/onepress-tigergrades"
+        },
+        {
+            "type": "path",
+            "url": "src/plugins/tiger-grades"
+        }
+    ]
+}

@@ -1,0 +1,16 @@
+{
+    "name": "spenpo-freelance/tiger-grades",
+    "description": "Tiger Grades Parent Portal Plugin",
+    "type": "wordpress-plugin",
+    "license": "MIT",
+    "version": "dev-main",
+    "authors": [
+        {
+            "name": "Spenpo",
+            "email": "spenpo@spenpo.com"
+        }
+    ],
+    "require": {
+        "php": "^8.0"
+    }
+}

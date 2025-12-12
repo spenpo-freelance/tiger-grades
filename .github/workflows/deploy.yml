@@ -1,11 +1,6 @@
 name: Deploy Plugin
 
 on:
-  push:
-    branches:
-      - main
-      - staging
-      - release
   workflow_dispatch: # Allows manual triggers as needed
 
 jobs:

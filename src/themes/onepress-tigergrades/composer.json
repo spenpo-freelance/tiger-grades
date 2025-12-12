@@ -1,0 +1,16 @@
+{
+    "name": "spenpo-freelance/onepress-tigergrades",
+    "description": "OnePress Tiger Grades Child Theme",
+    "type": "wordpress-theme",
+    "license": "MIT",
+    "version": "dev-main",
+    "authors": [
+        {
+            "name": "Spenpo",
+            "email": "spenpo@spenpo.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6"
+    }
+}
