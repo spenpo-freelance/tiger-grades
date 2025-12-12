@@ -90,10 +90,91 @@ jobs:
           echo "DEPLOY_PATH=${{ secrets.TIGER_GRADES_PATH }}/${{ github.ref_name }}" >> $GITHUB_ENV
         fi
 
-    - name: Deploy via Rsync
+    - name: Show deployment size
+      run: |
+        echo "📦 Deployment size analysis:"
+        du -sh wordpress/ || true
+        echo ""
+        echo "Top 10 largest directories:"
+        du -h wordpress/* 2>/dev/null | sort -rh | head -10 || true
+
+    - name: Create rsync exclude file
+      run: |
+        cat > .rsync-exclude << 'EOF'
+        # Cache directories
+        wp-content/cache/
+        wp-content/upgrade/
+        
+        # Logs
+        *.log
+        wp-content/debug.log
+        
+        # OS files
+        .DS_Store
+        ._*
+        Thumbs.db
+        ehthumbs.db
+        
+        # Temporary files
+        *.tmp
+        *.temp
+        *~
+        
+        # IDE files
+        .vscode/
+        .idea/
+        *.swp
+        *.swo
+        
+        # Environment files
+        wp-config.php
+        .env*
+        
+        # Git files
+        .git/
+        .gitignore
+        .gitattributes
+        
+        # Node modules (if any)
+        node_modules/
+        **/node_modules/
+        
+        # Build artifacts
+        *.map
+        EOF
+        echo "✅ Created rsync exclude file"
+
+    - name: Deploy via Rsync (with retry)
+      id: rsync-deploy
+      continue-on-error: true
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzr
+        switches: -avzr --progress --partial --partial-dir=.rsync-partial --exclude-from=.rsync-exclude
+        path: wordpress/
+        remote_path: ${{ env.DEPLOY_PATH }}
+        remote_host: ${{ secrets.HOSTINGER_HOST }}
+        remote_user: ${{ secrets.HOSTINGER_USERNAME }}
+        remote_key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+        remote_port: ${{ secrets.HOSTINGER_PORT }}
+
+    - name: Retry Rsync if failed
+      if: steps.rsync-deploy.outcome == 'failure'
+      continue-on-error: true
+      uses: burnett01/rsync-deployments@5.2.1
+      with:
+        switches: -avzr --progress --partial --partial-dir=.rsync-partial --exclude-from=.rsync-exclude
+        path: wordpress/
+        remote_path: ${{ env.DEPLOY_PATH }}
+        remote_host: ${{ secrets.HOSTINGER_HOST }}
+        remote_user: ${{ secrets.HOSTINGER_USERNAME }}
+        remote_key: ${{ secrets.HOSTINGER_PRIVATE_KEY }}
+        remote_port: ${{ secrets.HOSTINGER_PORT }}
+
+    - name: Final Rsync attempt
+      if: steps.rsync-deploy.outcome == 'failure'
+      uses: burnett01/rsync-deployments@5.2.1
+      with:
+        switches: -avzr --progress --partial --partial-dir=.rsync-partial --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
