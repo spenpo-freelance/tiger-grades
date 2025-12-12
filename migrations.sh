@@ -14,7 +14,7 @@ cd "$WORDPRESS_PATH"
 
 # Check if migrations table exists
 echo "Checking if migrations table exists"
-migrations_table_exists=$(wp db query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'wp_migrations'" --path="$WORDPRESS_PATH" --skip-column-names)
+migrations_table_exists=$(wp db query "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'wp_tigr_migrations'" --path="$WORDPRESS_PATH" --skip-column-names)
 
 if [ "$migrations_table_exists" -eq "0" ]; then
     echo "Migrations table does not exist, creating it"
@@ -29,7 +29,7 @@ check_migration_applied() {
     local migration_name="$1"
     local output count
 
-    output=$(wp db query "SELECT COUNT(*) FROM wp_migrations WHERE name='$migration_name'" --path="$WORDPRESS_PATH" --skip-column-names 2>&1)
+    output=$(wp db query "SELECT COUNT(*) FROM wp_tigr_migrations WHERE name='$migration_name'" --path="$WORDPRESS_PATH" --skip-column-names 2>&1)
     count=$(printf '%s\n' "$output" | head -n 1 | tr -d $'\r' | xargs)
 
     if ! [[ "$count" =~ ^[0-9]+$ ]]; then
@@ -44,7 +44,7 @@ check_migration_applied() {
 # Function to mark migration as applied
 mark_migration_applied() {
     local migration_name="$1"
-    wp db query "INSERT INTO wp_migrations (name) VALUES ('$migration_name')" --path="$WORDPRESS_PATH"
+    wp db query "INSERT INTO wp_tigr_migrations (name) VALUES ('$migration_name')" --path="$WORDPRESS_PATH"
 }
 
 # Function to process plugin or theme activation
