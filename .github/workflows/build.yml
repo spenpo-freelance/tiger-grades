@@ -144,6 +144,18 @@ jobs:
         EOF
         echo "✅ Created rsync exclude file"
 
+    - name: Clean up broken symlinks in build
+      run: |
+        echo "🔍 Checking for broken symlinks in wordpress/..."
+        # Find and remove broken symlinks (symlinks that don't point to existing files)
+        find wordpress/ -type l 2>/dev/null | while read -r link; do
+          if [ ! -e "$link" ]; then
+            echo "   Removing broken symlink: $link"
+            rm -f "$link"
+          fi
+        done
+        echo "✅ Cleaned up broken symlinks"
+
     - name: Clean up remote symlinks and conflicts (pre-deploy)
       uses: appleboy/ssh-action@v0.1.8
       continue-on-error: true
@@ -164,7 +176,7 @@ jobs:
       continue-on-error: true
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --exclude-from=.rsync-exclude
+        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --copy-unsafe-links --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
@@ -177,7 +189,7 @@ jobs:
       continue-on-error: true
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --exclude-from=.rsync-exclude
+        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --copy-unsafe-links --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
@@ -189,7 +201,7 @@ jobs:
       if: steps.rsync-deploy.outcome == 'failure'
       uses: burnett01/rsync-deployments@5.2.1
       with:
-        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --exclude-from=.rsync-exclude
+        switches: -avzrL --progress --partial --partial-dir=.rsync-partial --force --copy-unsafe-links --chmod=Du=rwx,Dgo=rx,Fu=rw,Fgo=r --exclude-from=.rsync-exclude
         path: wordpress/
         remote_path: ${{ env.DEPLOY_PATH }}
         remote_host: ${{ secrets.HOSTINGER_HOST }}
