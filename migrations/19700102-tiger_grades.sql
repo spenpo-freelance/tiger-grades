@@ -146,7 +146,7 @@ INSERT INTO `wp_tigr_feature_lookup` (`id`, `title`, `description`, `status`, `p
 (2, 'num_students', 'estimate of the number of students in the class', 'active', 1),
 (3, 'num_categories', 'estimate of the number of categories for the class', 'active', 1),
 (4, 'rest-api-routes', 'wordpress rest api routes registered by tiger grades plugin', 'active', NULL),
-(5, '/tiger-grades/v1/update-class', 'used by tiger grades azure functions microservice to update class row after remote class registration process has been completed', 'active', 4)
+(5, '/tiger-grades/v1/update-class', 'used by tiger grades azure functions microservice to update class row after remote class registration process has been completed', 'active', 4),
 (6, 'user-registration', 'enables the button for switching to the teacher registration form in the [tigr-registration] shortcode', 'active', NULL),
 (7, 'teacher-registration-form', 'enables the button for switching to the teacher registration form in the [tigr-registration] shortcode', 'active', 6);
 
