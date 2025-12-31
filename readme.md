@@ -1,4 +1,4 @@
-# Tiger Grades
+# Tiger Grades Parent Portal
 
 Built with [wp-build](https://github.com/spenpo/wp-build)
 
