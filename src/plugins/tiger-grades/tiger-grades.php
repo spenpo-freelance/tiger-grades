@@ -89,8 +89,8 @@ function enqueue_tiger_grades_styles() {
 }
 add_action('wp_enqueue_scripts', 'enqueue_tiger_grades_styles');
 
-// Register string translations on plugin activation
-register_activation_hook(__FILE__, function() {
-    // Register string translations
-    Spenpo\TigerGrades\Utilities\StringTranslationsManager::registerTranslations();
-});
+// // Register string translations on plugin activation
+// register_activation_hook(__FILE__, function() {
+//     // Register string translations
+//     Spenpo\TigerGrades\Utilities\StringTranslationsManager::registerTranslations();
+// });
