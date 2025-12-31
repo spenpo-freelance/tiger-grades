@@ -87,6 +87,36 @@ if ($localThemes === false || count($localThemes) === 0) {
     }
 }
 
+// Fix local plugins installed via Composer path repositories
+echo "   Fixing local plugins installed from src/plugins...\n";
+$localPlugins = glob('src/plugins/*', GLOB_ONLYDIR);
+if ($localPlugins === false || count($localPlugins) === 0) {
+    echo "   ➜ No local plugins detected\n";
+} else {
+    foreach ($localPlugins as $pluginPath) {
+        $pluginSlug = basename($pluginPath);
+        $installedPluginPath = "wordpress/wp-content/plugins/$pluginSlug";
+
+        if (is_link($installedPluginPath) || !is_dir($installedPluginPath)) {
+            if (file_exists($installedPluginPath) || is_link($installedPluginPath)) {
+                $removeCmd = 'rm -rf ' . escapeshellarg($installedPluginPath);
+                system($removeCmd);
+            }
+
+            $copyCmd = sprintf(
+                'cp -R %s %s',
+                escapeshellarg($pluginPath),
+                escapeshellarg('wordpress/wp-content/plugins/')
+            );
+
+            system($copyCmd);
+            echo "   ✓ Copied $pluginSlug plugin files\n";
+        } else {
+            echo "   ✓ $pluginSlug already installed without symlink\n";
+        }
+    }
+}
+
 echo "   ✓ WordPress files are in wordpress/ directory\n";
 
 // Step 4: Create necessary directories
